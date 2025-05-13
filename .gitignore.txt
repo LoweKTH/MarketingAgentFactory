@@ -1,0 +1,13 @@
+# === BACKEND (Java/Spring) ===
+backend/target/
+*.log
+
+# === AGENT (Python) ===
+ai-agent/__pycache__/
+ai-agent/*.pyc
+ai-agent/.env
+
+# === IDE / Verktyg ===
+.idea/
+.vscode/
+.DS_Store
