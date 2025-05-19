@@ -2,11 +2,18 @@
 backend/target/
 *.log
 
-# === AGENT (Python) ===
-ai-agent/__pycache__/
-ai-agent/*.pyc
-ai-agent/.env
+# Python virtual environments
+agents/venv/
+agents/.venv/
 
+# Python cache files
+agents/__pycache__/
+agents/**/__pycache__/
+agents/**/*.pyc
+agents/**/*.pyo
+
+# Environment files
+agents/.env
 # === IDE / Verktyg ===
 .idea/
 .vscode/
