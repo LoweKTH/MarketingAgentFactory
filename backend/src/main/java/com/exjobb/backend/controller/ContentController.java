@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/content")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "http://localhost:5173") // Allow frontend origin
 public class ContentController {
 
     private final TaskRouterService taskRouterService;
