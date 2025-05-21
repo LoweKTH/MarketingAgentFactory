@@ -52,7 +52,7 @@ const SocialPostGenerator = () => {
     };
 
     const handlePublishClick = () => {
-        if (generatedContent && generatedContent.data.content) {
+        if (generatedContent && generatedContent.content) {
             setShowPublishModal(true); // Show the modal
         } else {
             alert("Please generate content first before publishing.");
