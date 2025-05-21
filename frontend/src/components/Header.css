@@ -1,0 +1,28 @@
+/* src/components/Header.css (Example) */
+.header-container {
+  width: 100%;          /* full width of viewport */
+
+  margin: 0 auto;       /* center if max-width is smaller than viewport */
+  padding: 15px 20px;   /* keep some space inside */
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+}
+
+.header-title {
+  font-size: 1.8em;
+  color: #333;
+  margin: 0;
+}
+
+.header-badge {
+  font-size: 0.9em;
+  color: #fff;
+  background-color: #7e57c2; /* Purple-ish color like the image */
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}

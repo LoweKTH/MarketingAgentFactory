@@ -1,0 +1,28 @@
+ /* From: promptinput.css */
+        .prompt-input-container {
+            margin-bottom: 25px;
+        }
+
+        .prompt-label {
+            display: block;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .prompt-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            line-height: 1.5;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .prompt-textarea::placeholder {
+            color: #aaa;
+        }

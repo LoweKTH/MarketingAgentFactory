@@ -1,0 +1,56 @@
+/* From: postformatselector.css */
+        .post-format-container {
+            margin-bottom: 25px;
+        }
+
+        .post-format-label {
+            display: block;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .format-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap; /* Ensure responsiveness for buttons */
+        }
+
+        .format-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            background-color: #fff;
+            color: #555;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .format-button:hover {
+            background-color: #f0f0f0;
+            border-color: #bbb;
+        }
+
+        .format-button.active {
+            background-color: #0077b5; /* LinkedIn blue, adjust per active button */
+            color: white;
+            border-color: #0077b5;
+        }
+
+        .format-button.active:nth-child(1) { background-color: #0077b5; border-color: #0077b5; } /* LinkedIn */
+        .format-button.active:nth-child(2) { background-color: #1DA1F2; border-color: #1DA1F2; } /* Twitter */
+        .format-button.active:nth-child(3) { background-color: #E1306C; border-color: #E1306C; } /* Instagram */
+        .format-button.active:nth-child(4) { background-color: #1877F2; border-color: #1877F2; } /* Facebook */
+
+        .format-button svg { /* This rule from postformatselector.css doesn't apply to font-awesome <i>, but it's okay */
+            font-size: 1.2em;
+        }
+        .format-button i { /* Added for Font Awesome icons */
+            font-size: 1.2em;
+        }

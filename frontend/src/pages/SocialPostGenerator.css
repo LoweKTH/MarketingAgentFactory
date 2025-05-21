@@ -1,0 +1,36 @@
+ /* From: socialpostgenerator.css */
+        .social-post-generator-container {
+            width: 90vw;
+            min-width: 300px;
+            margin: 0 auto;
+            padding: 2vw 3vw;
+            box-sizing: border-box;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        @media (min-width: 768px) {
+            .social-post-generator-container {
+                padding: 25px;
+                
+            }
+        }
+
+        /* Overriding socialpostgenerator.css's center title for image match */
+        .main-title {
+            font-size: 1.6em;
+            color: #333;
+            margin-bottom: 25px;
+            font-weight: 600;
+            text-align: left; /* As per image */
+        }
+
+        /* Overriding socialpostgenerator.css's center footer for image match */
+        .footer-controls {
+            display: flex;
+            justify-content: space-between; /* To place note left and button right */
+            align-items: center;
+            margin-top: 30px;
+            /* Removed position: relative; - not strictly needed here unless sub-elements are positioned absolutely */
+        }
