@@ -1,10 +1,10 @@
 package com.exjobb.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -14,9 +14,8 @@ import java.time.LocalDateTime;
 /**
  * Entity representing a content generation task.
  *
- * This entity stores information about each content generation request,
- * including the request parameters, current status, and results.
- * It serves as the main tracking mechanism for the task workflow.
+ * Tasks store information about content generation requests,
+ * their status, and the generated content.
  */
 @Entity
 @Table(name = "tasks")
@@ -28,122 +27,110 @@ import java.time.LocalDateTime;
 public class Task {
 
     /**
-     * Unique identifier for the task.
-     * Generated automatically by the database.
+     * Internal database ID.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
-     * Human-readable task identifier for easier tracking.
-     * Format: "task-{timestamp}-{random}"
+     * External task ID visible to users.
+     * Used in APIs and for tracking.
      */
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String taskId;
 
     /**
-     * Type of content being generated (e.g., "social_post", "blog_post").
-     * Used by the Task Router to determine processing approach.
+     * Type of content being generated.
+     * Examples: "social_post", "blog_post", "ad_copy"
      */
     @Column(nullable = false)
     private String contentType;
 
     /**
-     * Brand voice to be used (e.g., "professional", "casual").
-     * Passed to the Python Content Agent for tone consistency.
+     * Brand voice for the content.
+     * Examples: "professional", "casual", "friendly"
      */
     @Column(nullable = false)
     private String brandVoice;
 
     /**
-     * Main topic/subject for the content.
-     * The core theme around which content will be generated.
+     * Main topic of the content.
      */
     @Column(nullable = false, length = 1000)
     private String topic;
 
     /**
-     * Target platform for the content (e.g., "linkedin", "twitter").
-     * Used for platform-specific optimization.
+     * Target platform for the content.
+     * Examples: "linkedin", "facebook", "twitter"
      */
     private String platform;
 
     /**
-     * Target audience description.
-     * Helps tailor the content to the appropriate demographic.
+     * Target audience for the content.
      */
     private String targetAudience;
 
     /**
-     * Key messages to include in the content (stored as JSON string).
-     * Important points that must be covered in the generated content.
+     * Key messages to include in the content.
+     * Stored as a comma-separated string.
      */
     @Column(length = 2000)
     private String keyMessages;
 
     /**
      * Current status of the task.
-     * Values: CREATED, PROCESSING, COMPLETED, FAILED
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskStatus status;
 
     /**
-     * The generated content result (if completed successfully).
-     * Stores the final output from the Content Agent.
-     */
-    @Column(length = 5000)
-    private String generatedContent;
-
-    /**
-     * Metadata about the generation process (stored as JSON).
-     * Includes information like generation time, model used, etc.
-     */
-    @Column(length = 2000)
-    private String metadata;
-
-    /**
      * Error message if the task failed.
-     * Helps with debugging and user feedback.
      */
     @Column(length = 1000)
     private String errorMessage;
 
     /**
-     * User who created this task.
-     * Links the task to the requesting user.
+     * The generated content.
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Column(length = 5000)
+    private String generatedContent;
+
+    /**
+     * Additional metadata about the task.
+     * Stored as a JSON string.
+     */
+    @Column(length = 2000)
+    private String metadata;
+
+    /**
+     * User who created the task.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User createdBy;
 
     /**
      * Timestamp when the task was created.
-     * Automatically set by JPA auditing.
      */
     @CreatedDate
-    @Column(updatable = false)
     private LocalDateTime createdAt;
 
     /**
      * Timestamp when the task was last updated.
-     * Automatically updated by JPA auditing.
      */
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-
     /**
-     * Enum defining possible task statuses.
-     * Helps track the task through its lifecycle.
+     * Possible statuses for a task.
      */
     public enum TaskStatus {
-        CREATED,     // Task created but not yet sent to Python service
-        PROCESSING,  // Currently being processed by Content Agent
-        COMPLETED,   // Successfully completed with results
-        FAILED,      // Failed with error message
-        CANCELLED    // Cancelled by user or system
+        CREATED,     // Just created, not yet processed
+        PROCESSING,  // Currently being processed
+        COMPLETED,   // Successfully completed
+        FAILED,      // Failed to complete
+        CANCELLED    // Cancelled by user
     }
 }

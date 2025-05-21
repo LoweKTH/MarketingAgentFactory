@@ -40,6 +40,17 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByCreatedByOrderByCreatedAtDesc(User user);
 
     /**
+     * Find tasks created by a specific user after a given date.
+     * Ordered by creation date (newest first).
+     * Used for retrieving recent user activity and implementing pagination.
+     *
+     * @param user The user who created the tasks
+     * @param createdAt The date threshold (tasks created after this date)
+     * @return List of tasks created by the user after the specified date
+     */
+    List<Task> findByCreatedByAndCreatedAtAfterOrderByCreatedAtDesc(User user, LocalDateTime createdAt);
+
+    /**
      * Find tasks by status.
      * Useful for monitoring and administration.
      *
@@ -110,4 +121,42 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "COUNT(t) " +
             "FROM Task t WHERE t.createdBy = :user")
     Object[] getUserTaskStatistics(@Param("user") User user);
+
+    /**
+     * Find tasks by user and status for filtered queries.
+     * Useful for showing user's tasks in specific states.
+     *
+     * @param user The user who created the tasks
+     * @param status The task status to filter by
+     * @return List of tasks matching the user and status criteria
+     */
+    List<Task> findByCreatedByAndStatus(User user, Task.TaskStatus status);
+
+    /**
+     * Count total tasks for a specific user.
+     * Used for pagination calculations and user statistics.
+     *
+     * @param user The user whose tasks to count
+     * @return Total number of tasks created by the user
+     */
+    long countByCreatedBy(User user);
+
+    /**
+     * Find tasks by platform for analytics.
+     * Helps understand which platforms are most commonly targeted.
+     *
+     * @param platform The target platform (e.g., "linkedin", "twitter")
+     * @return List of tasks targeting the specified platform
+     */
+    List<Task> findByPlatform(String platform);
+
+    /**
+     * Find failed tasks that can be retried.
+     * Used for implementing retry functionality.
+     *
+     * @param user The user whose failed tasks to retrieve
+     * @return List of failed tasks that can potentially be retried
+     */
+    @Query("SELECT t FROM Task t WHERE t.createdBy = :user AND t.status = 'FAILED' ORDER BY t.updatedAt DESC")
+    List<Task> findRetryableTasks(@Param("user") User user);
 }

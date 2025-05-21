@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
  * - Load brand guidelines and context
  * - Coordinate with Python Content Agent
  * - Store results and manage task lifecycle
+ * - Implement evaluator-optimizer workflow
  */
 @Service
 @RequiredArgsConstructor
@@ -34,18 +35,18 @@ import java.util.concurrent.CompletableFuture;
 public class TaskRouterService {
 
     private final TaskRepository taskRepository;
-    private final TaskResultRepository taskResultRepository;
-    private final BrandGuidelineService brandGuidelineService;
     private final PythonServiceClient pythonServiceClient;
     private final UserService userService;
+    // TODO: Add BrandGuidelineService when implemented
+    // private final BrandGuidelineService brandGuidelineService;
 
     /**
-     * Process a content generation request.
+     * Process a content generation request synchronously.
      *
      * This is the main entry point for content generation. It:
      * 1. Creates a new task in the database
      * 2. Loads relevant brand guidelines
-     * 3. Calls the Python Content Agent
+     * 3. Calls the Python Content Agent with evaluator-optimizer workflow
      * 4. Stores the results
      * 5. Returns the generated content
      *
@@ -63,9 +64,9 @@ public class TaskRouterService {
             Task task = createTask(request, currentUser);
             log.debug("Created task with ID: {}", task.getTaskId());
 
-            // Step 2: Load brand guidelines
-            BrandGuideline brandGuidelines = brandGuidelineService.getDefaultBrandGuidelines();
-            log.debug("Loaded brand guidelines: {}", brandGuidelines.getBrandName());
+            // Step 2: Load brand guidelines (for now using default/empty)
+            BrandGuideline brandGuidelines = getDefaultBrandGuidelines();
+            log.debug("Using default brand guidelines");
 
             // Step 3: Update task status to PROCESSING
             task.setStatus(Task.TaskStatus.PROCESSING);
@@ -75,7 +76,7 @@ public class TaskRouterService {
             // Step 4: Prepare request for Python service
             var pythonRequest = buildPythonRequest(request, brandGuidelines);
 
-            // Step 5: Call Python Content Agent
+            // Step 5: Call Python Content Agent (includes evaluator-optimizer workflow)
             log.info("Calling Python Content Agent for task: {}", task.getTaskId());
             var pythonResponse = pythonServiceClient.generateContent(pythonRequest);
 
@@ -84,9 +85,6 @@ public class TaskRouterService {
 
             // Step 7: Update task with results
             updateTaskWithSuccess(task, pythonResponse);
-
-            // Step 8: Store detailed results
-            storeTaskResult(task, pythonResponse);
 
             log.info("Successfully completed content generation for task: {}", task.getTaskId());
             return response;
@@ -185,6 +183,22 @@ public class TaskRouterService {
     }
 
     /**
+     * Get default brand guidelines.
+     *
+     * Temporary implementation until BrandGuidelineService is available.
+     * Returns a basic set of guidelines for initial testing.
+     */
+    private BrandGuideline getDefaultBrandGuidelines() {
+        // Return a simple default guideline for now
+        return BrandGuideline.builder()
+                .brandName("Default Brand")
+                .voiceGuidelines("Professional yet approachable tone")
+                .messagingGuidelines("Focus on value proposition and customer benefits")
+                .platformGuidelines("Adapt content length and style to platform requirements")
+                .build();
+    }
+
+    /**
      * Build the request object for the Python Content Agent.
      *
      * Combines the user request with brand guidelines and context
@@ -219,12 +233,9 @@ public class TaskRouterService {
      * suitable for sending to the Python Content Agent.
      *
      * @param brandGuidelines The brand guidelines entity
-     * @return Simplified brand guidelines map
+     * @return Simplified brand guidelines string
      */
     private String extractBrandGuidelinesForPython(BrandGuideline brandGuidelines) {
-        // In a real implementation, this would parse the JSON fields
-        // and create a structured object. For now, we'll use a simple approach.
-
         if (brandGuidelines == null) {
             return null;
         }
@@ -321,33 +332,6 @@ public class TaskRouterService {
     }
 
     /**
-     * Store detailed task results for analytics.
-     *
-     * Creates a TaskResult entity with detailed information
-     * about the generation process for analysis and improvement.
-     *
-     * @param task The completed task
-     * @param pythonResponse The response from Python service
-     */
-    private void storeTaskResult(Task task, PythonServiceClient.PythonGenerationResponse pythonResponse) {
-        var evaluation = pythonResponse.getEvaluation();
-
-        TaskResult taskResult = TaskResult.builder()
-                .task(task)
-                .evaluationScore(evaluation != null ? evaluation.getScore() : null)
-                .strengths(evaluation != null ? String.join(",", evaluation.getStrengths()) : null)
-                .suggestions(evaluation != null ? String.join(",", evaluation.getImprovements()) : null)
-                .optimizationPerformed(pythonResponse.getOptimizationPerformed())
-                .generationTimeMs(Math.round(pythonResponse.getGenerationTimeSeconds() * 1000))
-                .modelInfo(pythonResponse.getModelUsed())
-                .rawResponse(pythonResponse.toString()) // Store full response for debugging
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        taskResultRepository.save(taskResult);
-    }
-
-    /**
      * Handle generation failure cases.
      *
      * When content generation fails, this method ensures
@@ -363,10 +347,8 @@ public class TaskRouterService {
 
         log.error("Handling generation failure for user: {}", user.getUsername(), exception);
 
-        // Try to find and update the task if it was created
         try {
-            // This is a simplified approach - in reality, we'd need better task tracking
-            // For now, create a failure task for auditing
+            // Create a failure task for auditing
             Task failedTask = createTask(request, user);
             failedTask.setStatus(Task.TaskStatus.FAILED);
             failedTask.setErrorMessage(exception.getMessage());
@@ -418,8 +400,6 @@ public class TaskRouterService {
     public List<Task> getUserTasks(User user, int page, int size) {
         log.debug("Retrieving tasks for user: {} page: {} size: {}", user.getUsername(), page, size);
 
-        // For simplicity, we'll use a basic approach without Spring Data's Pageable
-        // In production, you'd typically use PageRequest and return a Page<Task>
         List<Task> allUserTasks = taskRepository.findByCreatedByOrderByCreatedAtDesc(user);
 
         // Calculate start and end indices for pagination
@@ -431,12 +411,7 @@ public class TaskRouterService {
             return List.of(); // Empty list if page is beyond available data
         }
 
-        List<Task> paginatedTasks = allUserTasks.subList(start, end);
-        log.debug("Returning {} tasks for user: {} (page {} of {})",
-                paginatedTasks.size(), user.getUsername(), page,
-                (allUserTasks.size() + size - 1) / size);
-
-        return paginatedTasks;
+        return allUserTasks.subList(start, end);
     }
 
     /**
@@ -475,19 +450,14 @@ public class TaskRouterService {
             throw new IllegalStateException("Cannot cancel failed task");
         }
 
-        // Update task status to cancelled (we'll add CANCELLED to the enum)
-        task.setStatus(Task.TaskStatus.FAILED); // Using FAILED for now, should be CANCELLED
+        // Update task status to cancelled
+        task.setStatus(Task.TaskStatus.FAILED); // Using FAILED for now, should add CANCELLED status
         task.setErrorMessage("Task cancelled by user");
         task.setUpdatedAt(LocalDateTime.now());
 
         taskRepository.save(task);
 
         log.info("Task cancelled successfully: {} by user: {}", taskId, user.getUsername());
-
-        // TODO: In a real implementation, you'd also need to:
-        // 1. Cancel any ongoing requests to the Python service
-        // 2. Clean up any resources allocated to the task
-        // 3. Notify the Python service to stop processing if already started
     }
 
     /**
@@ -503,7 +473,7 @@ public class TaskRouterService {
         log.debug("Retrieving {} recent tasks for user: {}", limit, user.getUsername());
 
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        List<Task> recentTasks = taskRepository.findRecentTasksByUser(user, thirtyDaysAgo);
+        List<Task> recentTasks = taskRepository.findByCreatedByAndCreatedAtAfterOrderByCreatedAtDesc(user, thirtyDaysAgo);
 
         // Limit the results
         return recentTasks.stream()
