@@ -1,0 +1,178 @@
+/* src/components/PublishModal.css */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of everything */
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px; /* Max width for the modal */
+    position: relative;
+    animation: fadeInScale 0.3s ease-out; /* Simple animation */
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #888;
+}
+
+.modal-close-button:hover {
+    color: #333;
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.modal-disclaimer {
+    background-color: #fff3cd; /* Light yellow background */
+    border: 1px solid #ffeeba;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 25px;
+    color: #856404; /* Dark yellow text */
+    display: flex;
+    align-items: flex-start;
+    font-size: 0.95rem;
+}
+
+.modal-disclaimer i {
+    margin-right: 10px;
+    color: #ffc107; /* Orange icon */
+    font-size: 1.2rem;
+}
+
+.platform-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive grid */
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.platform-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    font-size: 1.1rem;
+    color: #555;
+    background-color: #f8f8f8;
+}
+
+.platform-checkbox:hover {
+    background-color: #f0f0f0;
+    border-color: #bbb;
+}
+
+.platform-checkbox input[type="checkbox"] {
+    appearance: none; /* Hide default checkbox */
+    width: 20px;
+    height: 20px;
+    border: 2px solid #007bff;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0; /* Prevent it from shrinking */
+}
+
+.platform-checkbox input[type="checkbox"]:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.platform-checkbox input[type="checkbox"]:checked::after {
+    content: '\2713'; /* Checkmark symbol */
+    color: white;
+    font-size: 14px;
+}
+
+.platform-checkbox .fab {
+    font-size: 1.5rem;
+    color: #007bff; /* Default icon color */
+}
+
+/* Specific icon colors for better visual distinction */
+.platform-checkbox .fa-twitter { color: #1DA1F2; }
+.platform-checkbox .fa-linkedin { color: #0A66C2; }
+.platform-checkbox .fa-facebook-f { color: #1877F2; }
+.platform-checkbox .fa-instagram {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.modal-cancel-btn,
+.modal-confirm-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.modal-cancel-btn {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.modal-cancel-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.modal-confirm-btn {
+    background-color: #28a745; /* Green for confirm */
+    color: white;
+}
+
+.modal-confirm-btn:hover {
+    background-color: #218838; /* Darker green on hover */
+}

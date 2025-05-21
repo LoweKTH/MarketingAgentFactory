@@ -1,0 +1,96 @@
+/* src/components/HomePage.css */
+.homepage-container {
+    flex-grow: 1; /* Allow it to take up available space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    background-color: #f0f2f5; /* Match overall page background */
+}
+
+.homepage-content {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    max-width: 800px; /* Max width for content readability */
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.homepage-main-heading {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.homepage-description {
+    font-size: 1.1em;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.homepage-cta-button {
+    display: inline-flex; /* Use inline-flex to center content and allow icon */
+    align-items: center;
+    gap: 10px; /* Space between text and icon */
+    padding: 15px 30px;
+    background-color: #1976d2; /* Blue color */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none; /* Remove underline for link */
+    transition: background-color 0.2s, transform 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+
+.homepage-cta-button:hover {
+    background-color: #1565c0;
+    transform: translateY(-2px);
+}
+
+.homepage-cta-button i {
+    font-size: 1em;
+}
+
+.homepage-features {
+    margin-top: 40px;
+    text-align: left;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.homepage-features h3 {
+    font-size: 1.4em;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.homepage-features ul {
+    list-style: none;
+    padding: 0;
+}
+
+.homepage-features li {
+    font-size: 1em;
+    color: #666;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.homepage-features li .fas {
+    color: #28a745; /* Green checkmark */
+}

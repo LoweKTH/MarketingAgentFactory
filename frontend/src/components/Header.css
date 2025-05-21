@@ -1,28 +1,128 @@
-/* src/components/Header.css (Example) */
-.header-container {
-  width: 100%;          /* full width of viewport */
+/* src/components/Header.css */
 
-  margin: 0 auto;       /* center if max-width is smaller than viewport */
-  padding: 15px 20px;   /* keep some space inside */
-  box-sizing: border-box;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-  background-color: #f9f9f9;
+.header-container {
+    background-color: #2c3e50; /* Dark blue/grey header background */
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between; /* Distribute items with space in between */
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky; /* Keep header fixed at the top */
+    top: 0;
+    z-index: 100; /* Ensure header stays on top of other content */
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+}
+
+.header-left {
+    display: flex; /* Allow title and badge to sit side-by-side */
+    align-items: center;
+    gap: 15px; /* Space between title and badge */
+}
+
+.header-title-link {
+    text-decoration: none; /* Remove underline from the title link */
+    color: inherit; /* Inherit color from parent (white) */
 }
 
 .header-title {
-  font-size: 1.8em;
-  color: #333;
-  margin: 0;
+    margin: 0; /* Remove default h1 margin */
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white; /* Explicitly set color for the title */
+    transition: color 0.2s ease;
 }
 
-.header-badge {
-  font-size: 0.9em;
-  color: #fff;
-  background-color: #7e57c2; /* Purple-ish color like the image */
-  padding: 5px 10px;
-  border-radius: 12px;
-  font-weight: 500;
+.header-title-link:hover .header-title {
+    color: #a0d9ff; /* Lighter blue on hover for the title */
+}
+
+
+
+.header-nav {
+    display: flex;
+    gap: 25px; /* Space between nav links */
+    flex-grow: 1; /* Allow nav to take up available space */
+    justify-content: center; /* Center nav links within its space */
+    margin: 0 20px; /* Add some horizontal margin */
+}
+
+.header-nav .nav-link {
+    color: #c9e2ff; /* Light blue for nav links */
+    text-decoration: none;
+    font-size: 1.1rem;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.header-nav .nav-link:hover {
+    background-color: #3b506b;
+    color: white;
+}
+
+.header-nav .nav-link.active {
+    background-color: #007bff; /* Active link highlight */
+    color: white;
+    font-weight: bold;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    /* No specific styles needed here unless you have more elements */
+}
+
+/* Profile Button Styles */
+.profile-button {
+    background-color: #007bff; /* Blue button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between icon and text */
+    text-decoration: none; /* Remove underline for link */
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.profile-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: translateY(-1px); /* Slight lift effect */
+}
+
+.profile-button.active {
+    background-color: #004085; /* Even darker if active */
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3); /* Inner shadow for active */
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column; /* Stack items vertically */
+        padding: 15px 15px;
+        text-align: center;
+    }
+
+    .header-left {
+        flex-direction: column; /* Stack title and badge vertically */
+        gap: 5px;
+        margin-bottom: 15px; /* Space below header-left when stacked */
+    }
+
+    .header-nav {
+        margin: 15px 0; /* Add vertical margin */
+        flex-direction: column; /* Stack nav links vertically */
+        gap: 10px; /* Reduce gap */
+    }
+
+    .header-nav .nav-link,
+    .profile-button {
+        width: 100%; /* Make buttons/links full width */
+        justify-content: center; /* Center content within buttons */
+    }
 }
