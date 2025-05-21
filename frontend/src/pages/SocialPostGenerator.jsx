@@ -4,11 +4,14 @@ import './SocialPostGenerator.css';
 
 import PromptInput from '../components/PromptInput';
 import PostFormatSelector from '../components/PostFormatSelector';
-import GenerateButton from '../components/GenerateButton';
 import PublishButton from '../components/PublishButton';
 import PublishModal from '../components/PublishModal';
 
 import { generateSocialPost } from '../api/ContentGenerator-api'; // Make sure the path is correct
+
+import GenerateButton from '../components/GenerateButton';  // no braces, default import
+import ContentEvaluation from '../components/ContentEvaluation'; // Import our new component
+import { generateSocialPost } from '../api/ContentGenerator-api';
 
 const SocialPostGenerator = () => {
     const [prompt, setPrompt] = useState('');
@@ -19,6 +22,7 @@ const SocialPostGenerator = () => {
     const [showPublishModal, setShowPublishModal] = useState(false);
 
     const handleGeneratePost = async () => {
+        // Clear previous states
         setGeneratedContent(null);
         setError(null);
 
@@ -40,7 +44,7 @@ const SocialPostGenerator = () => {
 
         try {
             const result = await generateSocialPost(apiPayload);
-            setGeneratedContent(result);
+            setGeneratedContent(result.data || result); // Store the API response, handle different response structures
             console.log("API Response:", result);
         } catch (err) {
             console.error("Failed to generate post:", err);
@@ -50,7 +54,7 @@ const SocialPostGenerator = () => {
         }
     };
 
-     const handlePublishClick = () => {
+    const handlePublishClick = () => {
         if (generatedContent && generatedContent.data.content) {
             setShowPublishModal(true); // Show the modal
         } else {
@@ -90,7 +94,7 @@ const SocialPostGenerator = () => {
                 onSelectFormat={setSelectedPlatform} // This function will update the selectedPlatform state
             />
 
-           
+
 
             <div className="footer-controls">
                 <div className="footer-note" style={{ fontSize: '0.9em', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -105,20 +109,37 @@ const SocialPostGenerator = () => {
                     <i className="fas fa-spinner fa-spin"></i> Generating post...
                 </div>
             )}
+
             {error && (
                 <div style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>
                     Error: {error}
                 </div>
             )}
+
             {generatedContent && (
-                <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#e9f5ff' }}>
-                    <h3>Generated Content:</h3>
-                    <p>{generatedContent.data.content || JSON.stringify(generatedContent, null, 2)}</p>
-                    <div className="publish-button-wrapper"> {/* Wrapper for positioning */}
+                <div className="generated-content-wrapper">
+                    {/*
+           Consolidate the content display.
+           Assuming generatedContent.post is the primary text field,
+           but fallback to generatedContent.content if 'post' isn't there,
+           and then to JSON.stringify for debugging if neither exists.
+        */}
+                    <div className="content-display">
+                        {/* Display platform if available, otherwise default to "Post" */}
+                        <h3>Content for {generatedContent.platform || "Your Post"}</h3>
+                        <div className="content-text">
+                            {generatedContent.post || generatedContent.content || JSON.stringify(generatedContent, null, 2)}
+                        </div>
+                    </div>
+
+                    {/* Add the ContentEvaluation component - assumes it takes the whole object */}
+                    <ContentEvaluation evaluationData={generatedContent} />
+
+                    {/* The Publish Button wrapper */}
+                    <div className="publish-button-wrapper">
                         <PublishButton onClick={handlePublishClick} disabled={isLoading} />
                     </div>
                 </div>
-                
             )}
             {showPublishModal && (
                 <PublishModal
