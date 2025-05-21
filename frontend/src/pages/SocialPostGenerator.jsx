@@ -6,9 +6,6 @@ import PromptInput from '../components/PromptInput';
 import PostFormatSelector from '../components/PostFormatSelector';
 import PublishButton from '../components/PublishButton';
 import PublishModal from '../components/PublishModal';
-
-import { generateSocialPost } from '../api/ContentGenerator-api'; // Make sure the path is correct
-
 import GenerateButton from '../components/GenerateButton';  // no braces, default import
 import ContentEvaluation from '../components/ContentEvaluation'; // Import our new component
 import { generateSocialPost } from '../api/ContentGenerator-api';
@@ -119,11 +116,11 @@ const SocialPostGenerator = () => {
             {generatedContent && (
                 <div className="generated-content-wrapper">
                     {/*
-           Consolidate the content display.
-           Assuming generatedContent.post is the primary text field,
-           but fallback to generatedContent.content if 'post' isn't there,
-           and then to JSON.stringify for debugging if neither exists.
-        */}
+                        Consolidate the content display.
+                        Assuming generatedContent.post is the primary text field,
+                        but fallback to generatedContent.content if 'post' isn't there,
+                        and then to JSON.stringify for debugging if neither exists.
+                    */}
                     <div className="content-display">
                         {/* Display platform if available, otherwise default to "Post" */}
                         <h3>Content for {generatedContent.platform || "Your Post"}</h3>
