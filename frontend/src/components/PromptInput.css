@@ -21,6 +21,7 @@
             line-height: 1.5;
             box-sizing: border-box;
             resize: vertical;
+            background-color: #fff; /* Explicitly set to white */
         }
 
         .prompt-textarea::placeholder {
