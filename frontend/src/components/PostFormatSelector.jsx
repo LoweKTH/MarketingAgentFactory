@@ -1,17 +1,16 @@
 // src/components/PostFormatSelector.js
-import React, { useState } from 'react';
+import React from 'react';
 import './PostFormatSelector.css';
 // You'll need icons, e.g., from react-icons
 import { FaLinkedin, FaTwitter, FaInstagram, FaFacebookF } from 'react-icons/fa';
 
-const PostFormatSelector = () => {
-  const [selectedFormat, setSelectedFormat] = useState('LinkedIn'); // Default selection
-
+// Accept 'selectedFormat' and 'onSelectFormat' as props
+const PostFormatSelector = ({ selectedFormat, onSelectFormat }) => {
   const formats = [
-    { name: 'LinkedIn', icon: <FaLinkedin /> },
-    { name: 'Twitter', icon: <FaTwitter /> },
-    { name: 'Instagram', icon: <FaInstagram /> },
-    { name: 'Facebook', icon: <FaFacebookF /> },
+    { name: 'linkedin', label: 'LinkedIn', icon: <FaLinkedin /> }, // Use lowercase for platform name to match API expectation
+    { name: 'twitter', label: 'Twitter', icon: <FaTwitter /> },
+    { name: 'instagram', label: 'Instagram', icon: <FaInstagram /> },
+    { name: 'facebook', label: 'Facebook', icon: <FaFacebookF /> },
   ];
 
   return (
@@ -22,9 +21,10 @@ const PostFormatSelector = () => {
           <button
             key={format.name}
             className={`format-button ${selectedFormat === format.name ? 'active' : ''}`}
-            onClick={() => setSelectedFormat(format.name)}
+            // Call the onSelectFormat prop with the selected format's name
+            onClick={() => onSelectFormat(format.name)}
           >
-            {format.icon} {format.name}
+            {format.icon} {format.label} {/* Display the human-readable label */}
           </button>
         ))}
       </div>
