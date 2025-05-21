@@ -22,6 +22,7 @@
             box-sizing: border-box;
             resize: vertical;
             background-color: #fff; /* Explicitly set to white */
+            color: #000; /* Text is now black */
         }
 
         .prompt-textarea::placeholder {
