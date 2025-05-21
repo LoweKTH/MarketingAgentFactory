@@ -1,6 +1,7 @@
  /* From: promptinput.css */
         .prompt-input-container {
             margin-bottom: 25px;
+            color: #ffffff
         }
 
         .prompt-label {
@@ -28,3 +29,4 @@
         .prompt-textarea::placeholder {
             color: #aaa;
         }
+

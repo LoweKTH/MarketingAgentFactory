@@ -1,11 +1,11 @@
 """
-Marketing Agent Factory - Flask Application Entry Point
+Marketing Agent Factory - Smart Threshold Flask Application
 
-Updated Flask app for content generation using Google Gemini.
-Provides RESTful API for Spring Boot backend integration with
-evaluator-optimizer workflow support.
+Flask app for content generation with smart threshold evaluator-optimizer workflow.
+Provides RESTful API for Spring Boot backend integration.
 """
 import os
+import time
 import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Import our content agent
+# Import our smart threshold content agent
 from content_agent import ContentAgent
 
 # Configure logging
@@ -40,44 +40,33 @@ except Exception as e:
 def health_check():
     """
     Health check endpoint for service monitoring.
-    Matches the format expected by Spring Boot's PythonServiceClient.
-
-    Returns:
-        JSON response with service status
+    Provides status about the AI service.
     """
     agent_status = "healthy" if content_agent is not None else "unhealthy"
 
     return jsonify({
-        "status": "healthy" if agent_status == "healthy" else "unhealthy",
+        "status": agent_status,
         "service": "marketing-agent-factory-python",
-        "agent_status": agent_status,
         "llm_provider": "gemini",
         "model": os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash'),
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "features": {
+            "smart_threshold_optimization": True,
+            "evaluation": True
+        }
     })
 
 @app.route('/generate', methods=['POST'])
 def generate_content():
     """
-    Generate marketing content using the content agent with evaluator-optimizer workflow.
+    Generate marketing content with smart threshold evaluator-optimizer workflow.
 
-    Expects the exact format from Spring Boot's PythonGenerationRequest:
-    {
-        "contentType": "social_post",
-        "brandVoice": "professional",
-        "topic": "productivity tips",
-        "platform": "linkedin",
-        "targetAudience": "business professionals",
-        "keyMessages": ["time management", "efficiency"],
-        "brandGuidelines": "Professional yet approachable...",
-        "additionalContext": "Focus on remote work...",
-        "lengthPreference": "medium",
-        "includeHashtags": true,
-        "callToAction": "Learn more"
-    }
+    Uses the threshold-based approach to decide optimization strategy:
+    - Below 7.0: Full optimization
+    - 7.0-8.5 with specific weaknesses: Targeted optimization
+    - Above 8.5: No optimization
 
-    Returns:
-        JSON response matching PythonGenerationResponse format
+    Returns both versions when optimization occurs.
     """
     try:
         # Check if content agent is available
@@ -96,7 +85,7 @@ def generate_content():
                 "message": "Request body must contain valid JSON"
             }), 400
 
-        # Validate required fields (matching Spring Boot expectations)
+        # Validate required fields
         required_fields = ['contentType', 'brandVoice', 'topic']
         missing_fields = [field for field in required_fields if field not in data]
 
@@ -109,15 +98,28 @@ def generate_content():
 
         # Log the generation request
         logger.info(f"Content generation request: {data.get('contentType')} - {data.get('topic')}")
-        logger.debug(f"Request details: {data}")
 
-        # Generate content using the agent with evaluator-optimizer workflow
+        # Start timer for performance measurement
+        start_time = time.time()
+
+        # Generate content using the agent with smart threshold workflow
         result = content_agent.generate_content(data)
 
-        # Log successful completion
-        logger.info(f"Content generation completed: {result.get('generationTimeSeconds', 0):.2f}s")
+        # Log the response structure
+        app.logger.info(f"Response structure: {result['workflowInfo']}")
+        # Make sure evaluationPerformed is not being modified
+        if 'workflowInfo' in result and 'evaluationPerformed' in result['workflowInfo']:
+            app.logger.info(f"evaluationPerformed: {result['workflowInfo']['evaluationPerformed']}")
 
-        # Return the result directly (already in the correct format)
+        # Calculate total processing time
+        total_time = time.time() - start_time
+
+        # Log successful completion
+        optimization_type = result.get('workflowInfo', {}).get('optimizationType', 'none')
+        logger.info(f"Content generation completed in {total_time:.2f}s with "
+                  f"optimization type: {optimization_type}")
+
+        # Return the result - includes both versions when optimization performed
         return jsonify(result)
 
     except ValueError as e:
@@ -136,35 +138,6 @@ def generate_content():
             "message": str(e)
         }), 500
 
-@app.route('/stream/<task_id>', methods=['GET'])
-def stream_progress(task_id):
-    """
-    Stream progress updates for a content generation task.
-
-    This endpoint will be enhanced later with Server-Sent Events (SSE)
-    for real-time progress streaming. For now, returns task status.
-
-    Args:
-        task_id: Task identifier
-
-    Returns:
-        JSON with task progress information
-    """
-    logger.debug(f"Progress stream request for task: {task_id}")
-
-    # Placeholder response - will be enhanced with real streaming
-    return jsonify({
-        "task_id": task_id,
-        "status": "completed",
-        "progress": 100,
-        "message": "Content generation completed",
-        "steps": [
-            {"step": "initial_generation", "status": "completed", "timestamp": "2024-01-01T12:00:00Z"},
-            {"step": "evaluation", "status": "completed", "timestamp": "2024-01-01T12:00:30Z"},
-            {"step": "optimization", "status": "completed", "timestamp": "2024-01-01T12:01:00Z"}
-        ]
-    })
-
 @app.route('/evaluate', methods=['POST'])
 def evaluate_content():
     """
@@ -172,14 +145,6 @@ def evaluate_content():
 
     Allows evaluation of existing content without regeneration.
     Useful for testing the evaluator component independently.
-
-    Expected JSON:
-    {
-        "content": "Content to evaluate...",
-        "contentType": "social_post",
-        "brandVoice": "professional",
-        "platform": "linkedin"
-    }
     """
     try:
         if content_agent is None:
@@ -221,31 +186,62 @@ def evaluate_content():
             "message": str(e)
         }), 500
 
-@app.errorhandler(404)
-def not_found(error):
-    """Handle 404 errors with JSON response."""
-    return jsonify({
-        "error": "Not found",
-        "message": "The requested endpoint does not exist",
-        "available_endpoints": ["/health", "/generate", "/stream/<task_id>", "/evaluate"]
-    }), 404
+@app.route('/config', methods=['GET'])
+def get_config():
+    """
+    Get current configuration settings.
 
-@app.errorhandler(500)
-def internal_error(error):
-    """Handle 500 errors with JSON response."""
-    logger.error(f"Internal server error: {str(error)}")
-    return jsonify({
-        "error": "Internal server error",
-        "message": "An unexpected error occurred"
-    }), 500
+    Returns the current threshold settings for the smart threshold workflow.
+    """
+    if content_agent is None:
+        return jsonify({
+            "error": "Content agent not initialized"
+        }), 503
 
-@app.before_request
-def log_request_info():
-    """Log incoming requests for debugging."""
-    if request.method == 'POST':
-        logger.debug(f"Incoming {request.method} request to {request.path}")
-        if request.is_json:
-            logger.debug(f"Request JSON keys: {list(request.get_json().keys()) if request.get_json() else 'None'}")
+    config = {
+        "lowQualityThreshold": content_agent.low_quality_threshold,
+        "highQualityThreshold": content_agent.high_quality_threshold,
+        "modelName": content_agent.model_name
+    }
+
+    return jsonify(config)
+
+@app.route('/config', methods=['POST'])
+def update_config():
+    """
+    Update configuration settings.
+
+    Allows runtime adjustment of threshold parameters.
+    """
+    if content_agent is None:
+        return jsonify({
+            "error": "Content agent not initialized"
+        }), 503
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "No JSON data provided"
+        }), 400
+
+    # Update configuration settings
+    if 'lowQualityThreshold' in data:
+        content_agent.low_quality_threshold = float(data['lowQualityThreshold'])
+
+    if 'highQualityThreshold' in data:
+        content_agent.high_quality_threshold = float(data['highQualityThreshold'])
+
+    # Return updated configuration
+    config = {
+        "lowQualityThreshold": content_agent.low_quality_threshold,
+        "highQualityThreshold": content_agent.high_quality_threshold,
+        "modelName": content_agent.model_name
+    }
+
+    logger.info(f"Configuration updated: {config}")
+
+    return jsonify(config)
 
 if __name__ == '__main__':
     # Get configuration from environment
@@ -258,7 +254,7 @@ if __name__ == '__main__':
         logger.warning("GOOGLE_API_KEY not found in environment variables")
 
     # Start the Flask application
-    logger.info(f"Starting Marketing Agent Factory on {host}:{port}")
+    logger.info(f"Starting Smart Threshold Marketing Agent Factory on {host}:{port}")
     logger.info(f"Debug mode: {debug}")
     logger.info(f"Content agent status: {'Ready' if content_agent else 'Not available'}")
 

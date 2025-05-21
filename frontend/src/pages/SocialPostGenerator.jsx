@@ -5,19 +5,18 @@ import './SocialPostGenerator.css'; // For overall layout of this component
 import PromptInput from '../components/PromptInput';
 import PostFormatSelector from '../components/PostFormatSelector';
 import GenerateButton from '../components/GenerateButton';  // no braces, default import
+import ContentEvaluation from '../components/ContentEvaluation'; // Import our new component
 import { generateSocialPost } from '../api/ContentGenerator-api';
 
-
 const SocialPostGenerator = () => {
-
     const [prompt, setPrompt] = useState('');
     // State for API call status
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [generatedContent, setGeneratedContent] = useState(null);
 
-  const handleGeneratePost = async () => {
-    // Clear previous states
+    const handleGeneratePost = async () => {
+        // Clear previous states
         setGeneratedContent(null);
         setError(null);
 
@@ -41,7 +40,7 @@ const SocialPostGenerator = () => {
 
         try {
             const result = await generateSocialPost(apiPayload);
-            setGeneratedContent(result); // Store the API response
+            setGeneratedContent(result.data || result); // Store the API response, handle different response structures
             console.log("API Response:", result);
         } catch (err) {
             console.error("Failed to generate post:", err);
@@ -49,9 +48,9 @@ const SocialPostGenerator = () => {
         } finally {
             setIsLoading(false); // Reset loading state
         }
-  };
+    };
 
-  return (
+    return (
         <div className="social-post-generator-container">
             <h2 className="main-title">Create Your Social Media Post</h2>
 
@@ -60,9 +59,6 @@ const SocialPostGenerator = () => {
 
             {/* PostFormatSelector is currently not connected to state, but would be in a full app */}
             <PostFormatSelector />
-
-            {/* You'll likely want to add the Trending Topics section here too */}
-            {/* <div className="trending-topics-container">...</div> */}
 
             <div className="footer-controls">
                 {/* Pass isLoading prop to disable button while loading */}
@@ -75,16 +71,26 @@ const SocialPostGenerator = () => {
                     <i className="fas fa-spinner fa-spin"></i> Generating post...
                 </div>
             )}
+
             {error && (
                 <div style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>
                     Error: {error}
                 </div>
             )}
+
             {generatedContent && (
-                <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#e9f5ff' }}>
+                <div className="generated-content-wrapper">
                     <h3>Generated Content:</h3>
-                    {/* Assuming the API returns a 'post' field or similar; adjust as per your actual API response structure */}
-                    <p>{generatedContent.post || JSON.stringify(generatedContent, null, 2)}</p>
+
+                    {/* Add the ContentEvaluation component */}
+                    <ContentEvaluation evaluationData={generatedContent} />
+
+                    <div className="content-display">
+                        <h3>Content for {generatedContent.platform || "LinkedIn"}</h3>
+                        <div className="content-text">
+                            {generatedContent.content || JSON.stringify(generatedContent, null, 2)}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
