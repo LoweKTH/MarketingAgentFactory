@@ -299,37 +299,16 @@ public class TaskRouterService {
     private ContentGenerationResponse.WorkflowInfo buildWorkflowInfo(
             PythonServiceClient.PythonGenerationResponse pythonResponse) {
 
-        // Extract evaluation data if available
         var evaluation = pythonResponse.getEvaluation();
-
-        // Get workflow info if available, handle both null cases
-        PythonServiceClient.WorkflowInfo workflowInfo = pythonResponse.getWorkflowInfo();
-
-        // Extract values with null checks
-        Boolean evaluationPerformed = workflowInfo != null ? workflowInfo.getEvaluationPerformed() : false;
-        Double evaluationScore = workflowInfo != null ? workflowInfo.getEvaluationScore() : (evaluation != null ? evaluation.getScore() : null);
-        Boolean optimizationPerformed = pythonResponse.getOptimizationPerformed() != null ?
-                pythonResponse.getOptimizationPerformed() : (workflowInfo != null ? workflowInfo.getOptimizationPerformed() : false);
-        Integer optimizationIterations = workflowInfo != null && workflowInfo.getOptimizationIterations() != null ?
-                workflowInfo.getOptimizationIterations() : (optimizationPerformed ? 1 : 0);
-        String modelUsed = pythonResponse.getModelUsed() != null ?
-                pythonResponse.getModelUsed() : (workflowInfo != null ? workflowInfo.getModelUsed() : "Unknown");
-
-        // For debugging
-        log.info("Building workflow info from Python response:");
-        log.info("evaluationPerformed: {}", evaluationPerformed);
-        log.info("evaluationScore: {}", evaluationScore);
-        log.info("optimizationPerformed: {}", optimizationPerformed);
-        log.info("optimizationIterations: {}", optimizationIterations);
-        log.info("modelUsed: {}", modelUsed);
+        Boolean optimizationPerformed = pythonResponse.getOptimizationPerformed(); // Get the Boolean object
 
         return ContentGenerationResponse.WorkflowInfo.builder()
                 .initialGenerationCompleted(true)
-                .evaluationPerformed(evaluationPerformed) // Default to true
-                .evaluationScore(evaluationScore)
-                .optimizationPerformed(optimizationPerformed)
-                .optimizationIterations(optimizationIterations)
-                .modelUsed(modelUsed)
+                .evaluationPerformed(evaluation != null)
+                .evaluationScore(evaluation != null ? evaluation.getScore() : null)
+                .optimizationPerformed(Boolean.TRUE.equals(optimizationPerformed)) // Safely check for true
+                .optimizationIterations(Boolean.TRUE.equals(optimizationPerformed) ? 1 : 0) // Safely check for true
+                .modelUsed(pythonResponse.getModelUsed())
                 .build();
     }
 

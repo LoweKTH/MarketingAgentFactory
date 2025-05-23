@@ -1,5 +1,3 @@
-/* src/pages/ProfilePage.css */
-
 .profile-page-container {
     padding: 30px;
     max-width: 900px;
@@ -27,7 +25,7 @@
     border: 1px solid #ddd;
     border-radius: 10px;
     padding: 20px;
-    margin-bottom: 40px;
+    margin-bottom: 40px; /* Increased margin for tabs */
     text-align: center;
 }
 
@@ -51,6 +49,20 @@
     border: 1px solid #cce5ff;
 }
 
+/* Specific styling for connected/not connected status if desired */
+.platform-icon.connected {
+    background-color: #d4edda; /* Lighter green for connected */
+    border-color: #28a745;
+    color: #155724;
+}
+
+.platform-icon.not-connected {
+    background-color: #f8d7da; /* Lighter red for not connected */
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+
 .platform-icon .fab {
     font-size: 1.5rem;
 }
@@ -70,6 +82,69 @@
     background-color: #218838;
 }
 
+/* --- New Tab Styles --- */
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+    gap: 10px; /* Space between tabs */
+    flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
+}
+
+.tab-btn {
+    background-color: #f0f0f0;
+    color: #555;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px 8px 0 0; /* Rounded top corners */
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent; /* For active tab underline effect */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    background-color: #e5e5e5;
+    color: #333;
+}
+
+.tab-btn.active {
+    background-color: #007bff; /* Primary blue for active tab */
+    color: white;
+    border-bottom: 3px solid #0056b3; /* Darker blue underline */
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+    /* Remove border-radius on bottom for active tab to visually connect to content */
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.tab-btn.active .fab {
+    color: white; /* Ensure icons are white on active tab */
+}
+
+.tab-btn .fab {
+    font-size: 1.2rem;
+    color: #007bff; /* Default icon color for non-active tabs */
+}
+
+
+.no-posts-message {
+    text-align: center;
+    color: #777;
+    font-size: 1.1rem;
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+/* --- Existing Post Styles (should work fine) --- */
 .scheduled-posts-list {
     display: grid;
     gap: 25px;
@@ -155,7 +230,7 @@
     margin-right: 5px;
 }
 
-/* Toggle Switch Styles (re-using from previous example) */
+/* Toggle Switch Styles */
 .toggle-switch {
   position: relative;
   display: inline-block;

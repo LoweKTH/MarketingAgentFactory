@@ -64,16 +64,7 @@ public class PythonServiceClient {
                     .timeout(Duration.ofMillis(timeoutMs))
                     .block();
 
-            // Add logging to debug the response
-            assert response != null;
-            log.info("Raw Python service response: {}", response.getBody());
-            if (response.getBody() != null && response.getBody().getWorkflowInfo() != null) {
-                log.info("evaluationPerformed: {}", response.getBody().getWorkflowInfo().getEvaluationPerformed());
-            } else {
-                log.warn("Response body or workflowInfo is null");
-            }
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            if (response != null && response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 log.info("Successfully received response from Python service");
                 log.debug("Response content length: {} characters",
                         response.getBody().getContent() != null ? response.getBody().getContent().length() : 0);
@@ -270,7 +261,7 @@ public class PythonServiceClient {
         /**
          * Information about workflow steps performed.
          */
-        private WorkflowInfo workflowInfo;
+        private Map<String, Boolean> workflowSteps;
 
         /**
          * Evaluation results from the evaluator-optimizer workflow.
@@ -300,25 +291,6 @@ public class PythonServiceClient {
         /**
          * Name/version of the model used.
          */
-        private String modelUsed;
-    }
-
-    /**
-     * Workflow information from the Python service.
-     *
-     * Contains details about the workflow steps performed during content generation.
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class WorkflowInfo {
-        private Boolean initialGenerationCompleted;
-        private Boolean evaluationPerformed;
-        private Double evaluationScore;
-        private Boolean optimizationPerformed;
-        private String optimizationType;
-        private Integer optimizationIterations;
         private String modelUsed;
     }
 
