@@ -27,3 +27,43 @@ export const fetchTasks = async () => {
         throw error;
     }
 };
+
+export const deleteTask = async (taskId) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, { // Assuming DELETE /api/tasks/{taskId}
+            method: 'DELETE',
+            headers: {
+                // Add any necessary headers, e.g., authorization token
+                // 'Authorization': `Bearer ${yourAuthToken}`
+            },
+        });
+
+        if (!response.ok) {
+            let errorMessage = `HTTP error! Status: ${response.status}`;
+            try {
+                // Attempt to parse a more specific error message from the backend if available
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (jsonError) {
+                console.error("Failed to parse error response as JSON during delete:", jsonError);
+            }
+            throw new Error(errorMessage);
+        }
+
+        // If the response is 204 No Content, response.json() would fail.
+        // Check if there's content before trying to parse JSON.
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            // If the backend sends a JSON response on success (e.g., confirmation message)
+            const result = await response.json();
+            return result;
+        } else {
+            // No content expected or successful deletion without a body
+            return;
+        }
+
+    } catch (error) {
+        console.error(`Error deleting task with ID ${taskId}:`, error);
+        throw error; // Re-throw the error for the calling component to handle
+    }
+};

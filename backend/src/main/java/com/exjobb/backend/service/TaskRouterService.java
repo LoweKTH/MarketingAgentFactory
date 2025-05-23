@@ -2,10 +2,13 @@ package com.exjobb.backend.service;
 
 import com.exjobb.backend.dto.ContentGenerationRequest;
 import com.exjobb.backend.dto.ContentGenerationResponse;
+import com.exjobb.backend.dto.TaskDto;
 import com.exjobb.backend.entity.Task;
 import com.exjobb.backend.entity.User;
 import com.exjobb.backend.entity.BrandGuideline;
 import com.exjobb.backend.repository.TaskRepository;
+import com.exjobb.backend.utils.TaskMapper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -480,5 +483,47 @@ public class TaskRouterService {
         return recentTasks.stream()
                 .limit(limit)
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional // Ensures the operation is atomic
+    public void deleteTask(String taskId) {
+        // Find the task by its unique taskId (external ID)
+        Task task = taskRepository.findByTaskId(taskId)
+                .orElseThrow(() -> {
+                    log.warn("Attempted to delete non-existent task with ID: {}", taskId);
+                    return new IllegalArgumentException("Task not found with ID: " + taskId);
+                });
+
+        // Delete the found task
+        taskRepository.delete(task);
+        log.info("Task with ID {} successfully deleted.", taskId);
+    }
+
+    /**
+     * Retrieves all tasks from the database and converts them to TaskDto.
+     *
+     * @return A list of all tasks as TaskDto objects.
+     */
+    @Transactional(readOnly = true) // Read-only transaction for fetching data
+    public List<TaskDto> getAllTasks() {
+        List<Task> tasks = taskRepository.findAll();
+        return TaskMapper.toDtoList(tasks); // Use the mapper to convert to DTOs
+    }
+
+    /**
+     * Retrieves a single task by its unique external task ID and converts it to TaskDto.
+     *
+     * @param taskId The unique task identifier string (external ID).
+     * @return The TaskDto if found.
+     * @throws IllegalArgumentException if the task is not found.
+     */
+    @Transactional(readOnly = true) // Read-only transaction for fetching data
+    public TaskDto getTaskByExternalId(String taskId) {
+        Task task = taskRepository.findByTaskId(taskId)
+                .orElseThrow(() -> {
+                    log.warn("Attempted to retrieve non-existent task with ID: {}", taskId);
+                    return new IllegalArgumentException("Task not found with ID: " + taskId);
+                });
+        return TaskMapper.toDto(task); // Use the mapper to convert to DTO
     }
 }

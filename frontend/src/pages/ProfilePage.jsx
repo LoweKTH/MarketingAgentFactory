@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { fetchTasks as fetchTasksApi } from '../api/Task-api'; // Correct import with alias
+import { deleteTask } from '../api/Task-api';
 import './ProfilePage.css'; // Ensure your CSS is correctly linked
 
 // Helper function to capitalize the first letter of each word
@@ -88,14 +89,23 @@ const ProfilePage = () => {
         setShowDeleteConfirm(true);
     };
 
-    const handleConfirmDelete = () => {
-        setTasks(prevTasks =>
-            prevPosts.filter(post => post.id !== postToDeleteId)
-        );
-        setShowDeleteConfirm(false);
-        setPostToDeleteId(null);
-        console.log(`Confirmed delete for task: ${postToDeleteId}`);
-        // TODO: In a real app, implement an API call to delete the task from the backend
+    const handleConfirmDelete = async () => { // Make this function async
+        try {
+            // Call the backend API to delete the task
+            await deleteTask(postToDeleteId); // Use the new deleteTask API function
+
+            // If the API call is successful, then update the frontend state
+            setTasks(prevTasks =>
+                prevTasks.filter(task => task.id !== postToDeleteId)
+            );
+            console.log(`Successfully deleted task: ${postToDeleteId} from backend and frontend.`);
+        } catch (err) {
+            console.error(`Failed to delete task ${postToDeleteId}:`, err);
+            setError(`Failed to delete task: ${err.message}`); // Display an error to the user
+        } finally {
+            setShowDeleteConfirm(false); // Close modal regardless of success/failure
+            setPostToDeleteId(null); // Clear the ID
+        }
     };
 
     const handleCancelDelete = () => {
