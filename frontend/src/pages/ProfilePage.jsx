@@ -1,87 +1,101 @@
 import React, { useState, useEffect } from 'react';
-import ConfirmationModal from '../components/ConfirmationModal'; // NEW: Import ConfirmationModal
-import './ProfilePage.css';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { fetchTasks as fetchTasksApi } from '../api/Task-api'; // Correct import with alias
+import './ProfilePage.css'; // Ensure your CSS is correctly linked
 
-// Helper function to capitalize the first letter
-const capitalize = (s) => {
+// Helper function to capitalize the first letter of each word
+const capitalizeWords = (s) => {
     if (typeof s !== 'string') return '';
-    return s.charAt(0).toUpperCase() + s.slice(1);
+    return s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
-const ProfilePage = ({  }) => {
+const ProfilePage = () => {
     // Define the social media platforms and their connection status
     const [connectedAccounts, setConnectedAccounts] = useState({
         twitter: true,
         linkedin: true,
         facebook: false,
         instagram: false,
-        // Add more platforms as needed
     });
 
-    // State for the active tab
-    const [activeTab, setActiveTab] = useState('all'); // 'all' for all posts, or platform name (e.g., 'twitter')
+    // State for the active tab (e.g., 'all', 'twitter', 'linkedin')
+    const [activeTab, setActiveTab] = useState('all');
 
-    const [scheduledPosts, setScheduledPosts] = useState([
-        {
-            id: 'mock-1',
-            content: 'Exciting news from our AI Marketing Agent! #AI #Marketing',
-            platforms: ['twitter', 'linkedin'], // Ensure these match the keys in connectedAccounts
-            frequencyHours: 24,
-            isActive: true,
-            lastRun: '2025-05-20 14:00',
-            nextRun: '2025-05-21 14:00'
-        },
-        {
-            id: 'mock-2',
-            content: 'Unlock your business potential with cutting-edge tech. #Innovation',
-            platforms: ['facebook'], // Ensure these match the keys in connectedAccounts
-            frequencyHours: 72,
-            isActive: false,
-            lastRun: '2025-05-18 09:00',
-            nextRun: '2025-05-21 09:00'
-        },
-        {
-            id: 'mock-3',
-            content: 'A new post just for Twitter! #TweetDeck',
-            platforms: ['twitter'],
-            frequencyHours: 48,
-            isActive: true,
-            lastRun: '2025-05-19 10:00',
-            nextRun: '2025-05-21 10:00'
-        },
-        {
-            id: 'mock-4',
-            content: 'Engage your professional network with this LinkedIn exclusive. #CareerGrowth',
-            platforms: ['linkedin'],
-            frequencyHours: 24,
-            isActive: true,
-            lastRun: '2025-05-20 16:00',
-            nextRun: '2025-05-21 16:00'
-        }
-    ]);
+    // This will store tasks fetched from the backend, with added placeholder fields
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [postToDeleteId, setPostToDeleteId] = useState(null);
 
-    const handleToggleActive = (postId) => {
-        setScheduledPosts(prevPosts =>
-            prevPosts.map(post =>
-                post.id === postId ? { ...post, isActive: !post.isActive } : post
-            )
-        );
+    // Function to fetch tasks from the backend and process them for display
+    const fetchAndProcessTasks = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await fetchTasksApi(); // Call the actual API function from api.js
+
+            // Map the backend TaskDto objects and add placeholder values for recurrence fields
+            const formattedTasks = data.map(task => {
+                // Generate some random-looking placeholder values for recurring fields
+                const randomHours = Math.floor(Math.random() * (72 - 24 + 1)) + 24; // Between 24 and 72 hours
+                const baseDate = task.createdAt ? new Date(task.createdAt) : new Date();
+
+                // Example placeholder dates (adjust format as needed)
+                const lastRunPlaceholder = new Date(baseDate.getTime() - (randomHours * 3600 * 1000)).toLocaleString();
+                const nextRunPlaceholder = new Date(baseDate.getTime() + (randomHours * 3600 * 1000)).toLocaleString();
+
+                return {
+                    ...task, // Spread all original TaskDto fields (id, taskId, contentType, generatedContent, etc.)
+                    id: task.taskId || task.id, // Use taskId as primary ID, fallback to DB id
+                    platform: task.platform ? task.platform.toLowerCase() : 'N/A', // Ensure platform is lowercase
+                    isActive: task.status === 'COMPLETED' || task.status === 'PROCESSING' || task.status === 'PENDING',
+                    topic: task.contentType ? capitalizeWords(task.contentType.replace(/_/g, ' ')) : 'Generated Content',
+                    // --- NEW: Hardcoded/Random placeholder values for recurring post fields ---
+                    frequencyHours: randomHours,
+                    lastRun: lastRunPlaceholder,
+                    nextRun: nextRunPlaceholder,
+                    // --- END NEW ---
+                };
+            });
+            setTasks(formattedTasks); // Update the 'tasks' state
+        } catch (err) {
+            console.error("Failed to load tasks:", err);
+            setError("Failed to load tasks. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDeleteClick = (postId) => {
-        setPostToDeleteId(postId);
+    // Fetch tasks when the component mounts
+    useEffect(() => {
+        fetchAndProcessTasks();
+    }, []);
+
+    const handleToggleActive = (taskId) => {
+        setTasks(prevTasks =>
+            prevTasks.map(task =>
+                task.id === taskId ? { ...task, isActive: !task.isActive } : task
+            )
+        );
+        console.log(`Toggle active status for task: ${taskId}`);
+        // TODO: In a real app, implement an API call to update the task's status in the backend
+    };
+
+    const handleDeleteClick = (taskId) => {
+        setPostToDeleteId(taskId);
         setShowDeleteConfirm(true);
     };
 
     const handleConfirmDelete = () => {
-        setScheduledPosts(prevPosts =>
+        setTasks(prevTasks =>
             prevPosts.filter(post => post.id !== postToDeleteId)
         );
         setShowDeleteConfirm(false);
         setPostToDeleteId(null);
+        console.log(`Confirmed delete for task: ${postToDeleteId}`);
+        // TODO: In a real app, implement an API call to delete the task from the backend
     };
 
     const handleCancelDelete = () => {
@@ -90,17 +104,14 @@ const ProfilePage = ({  }) => {
     };
 
     const handleConnectNewAccount = () => {
-        // Example: If you connect Facebook, update the state:
-        // setConnectedAccounts(prev => ({ ...prev, facebook: true }));
+        console.log("Connect New Account clicked");
     };
 
-    // Filter posts based on the active tab
-    const filteredPosts = scheduledPosts.filter(post => {
+    const filteredTasks = tasks.filter(task => {
         if (activeTab === 'all') {
             return true;
         }
-        // Check if the post's platforms array includes the active tab's platform
-        return post.platforms.includes(activeTab);
+        return task.platform && task.platform === activeTab;
     });
 
     const getPlatformIcon = (platform) => {
@@ -113,16 +124,24 @@ const ProfilePage = ({  }) => {
         }
     };
 
+    if (loading) {
+        return <div className="profile-page-container"><p>Loading tasks...</p></div>;
+    }
+
+    if (error) {
+        return <div className="profile-page-container"><p className="error-message">{error}</p></div>;
+    }
+
     return (
         <div className="profile-page-container">
-            <h1>Your Scheduled Recurring Posts</h1>
+            <h1>Your Saved Tasks</h1>
 
             <div className="connected-accounts-section">
                 <h2>Connected Social Accounts</h2>
                 <div className="account-status">
                     {Object.entries(connectedAccounts).map(([platform, isConnected]) => (
                         <span key={platform} className={`platform-icon ${isConnected ? 'connected' : 'not-connected'}`}>
-                            {getPlatformIcon(platform)} {capitalize(platform)}: {isConnected ? 'Connected' : 'Not Connected'}
+                            {getPlatformIcon(platform)} {capitalizeWords(platform)}: {isConnected ? 'Connected' : 'Not Connected'}
                         </span>
                     ))}
                 </div>
@@ -131,60 +150,82 @@ const ProfilePage = ({  }) => {
                 </button>
             </div>
 
-            {/* Tabs for filtering posts */}
             <div className="tabs-container">
                 <button
                     className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
                     onClick={() => setActiveTab('all')}
                 >
-                    All Posts
+                    All Tasks
                 </button>
                 {Object.entries(connectedAccounts).map(([platform, isConnected]) => (
-                    isConnected && ( // Only show tabs for connected accounts
+                    isConnected && (
                         <button
                             key={platform}
                             className={`tab-btn ${activeTab === platform ? 'active' : ''}`}
                             onClick={() => setActiveTab(platform)}
                         >
-                            {getPlatformIcon(platform)} {capitalize(platform)}
+                            {getPlatformIcon(platform)} {capitalizeWords(platform)}
                         </button>
                     )
                 ))}
             </div>
 
-            {/* Display filtered posts */}
-            {filteredPosts.length === 0 ? (
+            {filteredTasks.length === 0 ? (
                 <p className="no-posts-message">
-                    No recurring posts scheduled for {activeTab === 'all' ? 'all platforms' : capitalize(activeTab)} yet.
-                    Generate and schedule one from the main page!
+                    No saved tasks for {activeTab === 'all' ? 'all platforms' : capitalizeWords(activeTab)} yet.
+                    Generate a task from the main page!
                 </p>
             ) : (
                 <div className="scheduled-posts-list">
-                    {filteredPosts.map(post => (
-                        <div key={post.id} className="scheduled-post-item">
+                    {filteredTasks.map(task => (
+                        <div key={task.id} className="scheduled-post-item">
                             <div className="post-header">
-                                <h3>Post ID: {post.id}</h3>
+                                {task.taskId && <h3>Task ID: {task.taskId}</h3>}
                                 <div className="post-actions">
                                     <label className="toggle-switch">
                                         <input
                                             type="checkbox"
-                                            checked={post.isActive}
-                                            onChange={() => handleToggleActive(post.id)}
+                                            checked={task.isActive}
+                                            onChange={() => handleToggleActive(task.id)}
                                         />
                                         <span className="slider round"></span>
                                     </label>
-                                    <button onClick={() => handleDeleteClick(post.id)} className="delete-btn">
+                                    <button onClick={() => handleDeleteClick(task.id)} className="delete-btn">
                                         <i className="fas fa-trash"></i> Delete
                                     </button>
                                 </div>
                             </div>
-                            <p className="post-content">{post.content}</p>
+                            <p className="post-content">
+                                <strong>Topic:</strong> {task.topic || 'N/A'}
+                            </p>
                             <div className="post-details">
-                                <span><i className="fas fa-share-alt"></i> Platforms: {post.platforms.map(p => capitalize(p)).join(', ')}</span>
-                                <span><i className="fas fa-redo-alt"></i> Every {post.frequencyHours} hours</span>
-                                <span><i className="fas fa-clock"></i> Last Run: {post.lastRun}</span>
-                                {post.isActive && <span><i className="fas fa-calendar-alt"></i> Next Run: {post.nextRun}</span>}
-                                {!post.isActive && <span style={{ color: '#dc3545' }}><i className="fas fa-pause-circle"></i> Paused</span>}
+                                <textarea
+                                    readOnly
+                                    value={task.generatedContent || ''}
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '100px',
+                                        marginTop: '5px',
+                                        padding: '10px',
+                                        border: '1px solid #dcdcdc',
+                                        borderRadius: '4px',
+                                        resize: 'vertical',
+                                        boxSizing: 'border-box',
+                                        fontSize: '0.9em',
+                                        lineHeight: '1.5'
+                                    }}
+                                />
+                            </div>
+                            <div className="post-details">
+                                <span><i className="fas fa-share-alt"></i> Platform: {task.platform ? capitalizeWords(task.platform) : 'N/A'}</span>
+                                {/* RE-ADDED: Hardcoded/placeholder recurrence fields */}
+                                <span><i className="fas fa-redo-alt"></i> Every {task.frequencyHours} hours</span>
+                                <span><i className="fas fa-clock"></i> Last Run: {task.lastRun}</span>
+                                {task.isActive && <span><i className="fas fa-calendar-alt"></i> Next Run: {task.nextRun}</span>}
+                                {/* END RE-ADDED */}
+                                {!task.isActive && <span style={{ color: '#dc3545' }}><i className="fas fa-pause-circle"></i> Paused</span>}
+                                {task.status && <span><i className="fas fa-info-circle"></i> Status: {capitalizeWords(task.status)}</span>}
+                                {task.createdAt && <span><i className="fas fa-calendar-alt"></i> Created At: {new Date(task.createdAt).toLocaleString()}</span>}
                             </div>
                         </div>
                     ))}
@@ -193,7 +234,7 @@ const ProfilePage = ({  }) => {
 
             {showDeleteConfirm && (
                 <ConfirmationModal
-                    message="Are you sure you want to delete this scheduled post?"
+                    message="Are you sure you want to delete this saved task?"
                     onConfirm={handleConfirmDelete}
                     onCancel={handleCancelDelete}
                 />
