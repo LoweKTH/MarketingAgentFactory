@@ -2,6 +2,7 @@ package com.exjobb.backend.service;
 
 import com.exjobb.backend.dto.ContentGenerationRequest;
 import com.exjobb.backend.dto.ContentGenerationResponse;
+import com.exjobb.backend.dto.SaveContentRequest;
 import com.exjobb.backend.dto.TaskDto;
 import com.exjobb.backend.entity.Task;
 import com.exjobb.backend.entity.User;
@@ -302,16 +303,37 @@ public class TaskRouterService {
     private ContentGenerationResponse.WorkflowInfo buildWorkflowInfo(
             PythonServiceClient.PythonGenerationResponse pythonResponse) {
 
+        // Extract evaluation data if available
         var evaluation = pythonResponse.getEvaluation();
-        Boolean optimizationPerformed = pythonResponse.getOptimizationPerformed(); // Get the Boolean object
+
+        // Get workflow info if available, handle both null cases
+        PythonServiceClient.WorkflowInfo workflowInfo = pythonResponse.getWorkflowInfo();
+
+        // Extract values with null checks
+        Boolean evaluationPerformed = workflowInfo != null ? workflowInfo.getEvaluationPerformed() : false;
+        Double evaluationScore = workflowInfo != null ? workflowInfo.getEvaluationScore() : (evaluation != null ? evaluation.getScore() : null);
+        Boolean optimizationPerformed = pythonResponse.getOptimizationPerformed() != null ?
+                pythonResponse.getOptimizationPerformed() : (workflowInfo != null ? workflowInfo.getOptimizationPerformed() : false);
+        Integer optimizationIterations = workflowInfo != null && workflowInfo.getOptimizationIterations() != null ?
+                workflowInfo.getOptimizationIterations() : (optimizationPerformed ? 1 : 0);
+        String modelUsed = pythonResponse.getModelUsed() != null ?
+                pythonResponse.getModelUsed() : (workflowInfo != null ? workflowInfo.getModelUsed() : "Unknown");
+
+        // For debugging
+        log.info("Building workflow info from Python response:");
+        log.info("evaluationPerformed: {}", evaluationPerformed);
+        log.info("evaluationScore: {}", evaluationScore);
+        log.info("optimizationPerformed: {}", optimizationPerformed);
+        log.info("optimizationIterations: {}", optimizationIterations);
+        log.info("modelUsed: {}", modelUsed);
 
         return ContentGenerationResponse.WorkflowInfo.builder()
                 .initialGenerationCompleted(true)
-                .evaluationPerformed(evaluation != null)
-                .evaluationScore(evaluation != null ? evaluation.getScore() : null)
-                .optimizationPerformed(Boolean.TRUE.equals(optimizationPerformed)) // Safely check for true
-                .optimizationIterations(Boolean.TRUE.equals(optimizationPerformed) ? 1 : 0) // Safely check for true
-                .modelUsed(pythonResponse.getModelUsed())
+                .evaluationPerformed(evaluationPerformed) // Default to true
+                .evaluationScore(evaluationScore)
+                .optimizationPerformed(optimizationPerformed)
+                .optimizationIterations(optimizationIterations)
+                .modelUsed(modelUsed)
                 .build();
     }
 
@@ -525,5 +547,108 @@ public class TaskRouterService {
                     return new IllegalArgumentException("Task not found with ID: " + taskId);
                 });
         return TaskMapper.toDto(task); // Use the mapper to convert to DTO
+    }
+
+    /**
+     * Generate content ONLY - don't save to database
+     * Returns the generated content for user preview
+     */
+    public ContentGenerationResponse generateContentOnly(ContentGenerationRequest request, User currentUser) {
+        log.info("Generating content only for user: {} content type: {}", 
+                currentUser.getUsername(), request.getContentType());
+
+        try {
+            // Load brand guidelines
+            BrandGuideline brandGuidelines = getDefaultBrandGuidelines();
+            log.debug("Using default brand guidelines");
+
+            // Prepare request for Python service
+            var pythonRequest = buildPythonRequest(request, brandGuidelines);
+
+            // Call Python Content Agent
+            log.info("Calling Python Content Agent for content generation");
+            var pythonResponse = pythonServiceClient.generateContent(pythonRequest);
+
+            // Create response WITHOUT saving to database
+            ContentGenerationResponse response = ContentGenerationResponse.builder()
+                    .taskId(null) // No task ID since we haven't saved yet
+                    .content(pythonResponse.getContent())
+                    .contentType(request.getContentType())
+                    .platform(request.getPlatform())
+                    .brandVoice(request.getBrandVoice())
+                    .targetAudience(request.getTargetAudience())
+                    .generationTimeSeconds(pythonResponse.getGenerationTimeSeconds())
+                    .workflowInfo(buildWorkflowInfo(pythonResponse))
+                    .suggestions(pythonResponse.getSuggestions())
+                    .estimatedMetrics(pythonResponse.getEstimatedMetrics())
+                    .generatedAt(LocalDateTime.now())
+                    .feedbackEnabled(true)
+                    .build();
+
+            log.info("Content generation completed successfully");
+            return response;
+
+        } catch (Exception e) {
+            log.error("Content generation failed for user: {} error: {}", 
+                    currentUser.getUsername(), e.getMessage(), e);
+            throw new RuntimeException("Content generation failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Save the generated content to database
+     * Called when user decides to save the content
+     */
+    @Transactional
+    public String saveGeneratedContent(SaveContentRequest saveRequest, User currentUser) {
+        log.info("Saving generated content for user: {}", currentUser.getUsername());
+
+        try {
+            // Create task with the generated content
+            Task task = createTaskFromSaveRequest(saveRequest, currentUser);
+            
+            // Mark as completed since content is already generated
+            task.setStatus(Task.TaskStatus.COMPLETED);
+            task.setGeneratedContent(saveRequest.getContent());
+            task.setUpdatedAt(LocalDateTime.now());
+
+            // Store metadata
+            task.setMetadata(String.format("{\"model\": \"%s\", \"generationTime\": %.2f}",
+                    saveRequest.getModelUsed(), saveRequest.getGenerationTimeSeconds()));
+
+            task = taskRepository.save(task);
+
+            log.info("Content saved successfully with task ID: {}", task.getTaskId());
+            return task.getTaskId();
+
+        } catch (Exception e) {
+            log.error("Failed to save content for user: {}", currentUser.getUsername(), e);
+            throw new RuntimeException("Failed to save content: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Create a task from save request
+     */
+    private Task createTaskFromSaveRequest(SaveContentRequest saveRequest, User user) {
+        String taskId = "task-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
+
+        String keyMessagesJson = saveRequest.getKeyMessages() != null
+                ? String.join(",", saveRequest.getKeyMessages())
+                : null;
+
+        return Task.builder()
+                .taskId(taskId)
+                .contentType(saveRequest.getContentType())
+                .brandVoice(saveRequest.getBrandVoice())
+                .topic(saveRequest.getTopic())
+                .platform(saveRequest.getPlatform())
+                .targetAudience(saveRequest.getTargetAudience())
+                .keyMessages(keyMessagesJson)
+                .status(Task.TaskStatus.COMPLETED) // Already completed
+                .createdBy(user)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
 }

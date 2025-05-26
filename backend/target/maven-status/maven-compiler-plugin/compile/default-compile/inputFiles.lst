@@ -5,9 +5,13 @@ C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjo
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\config\WebConfig.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\ContentController.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\HealthController.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\TaskController.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\ApiResponse.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\ContentGenerationRequest.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\ContentGenerationResponse.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\SaveContentRequest.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\TaskDto.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\UserDto.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\entity\BrandGuideline.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\entity\Task.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\entity\User.java
@@ -18,3 +22,4 @@ C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjo
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\PythonServiceClient.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\TaskRouterService.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\UserService.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\utils\TaskMapper.java
