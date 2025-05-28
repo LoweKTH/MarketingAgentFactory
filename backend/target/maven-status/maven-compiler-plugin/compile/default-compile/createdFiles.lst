@@ -15,6 +15,7 @@ com\exjobb\backend\dto\ContentGenerationResponse$OptimizationDetails$Optimizatio
 com\exjobb\backend\entity\User$UserBuilder.class
 com\exjobb\backend\service\UserService.class
 com\exjobb\backend\entity\User.class
+com\exjobb\backend\utils\JwtUtil.class
 com\exjobb\backend\dto\ContentGenerationResponse$WorkflowInfo$WorkflowInfoBuilder.class
 com\exjobb\backend\service\UserService$UserStatistics.class
 com\exjobb\backend\repository\UserRepository.class

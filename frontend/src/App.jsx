@@ -1,27 +1,59 @@
 // src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css'; // Global styles
-import Header from './components/Header';
-import HomePage from './pages/HomePage'; // Import the new HomePage
-import ProfilePage from './pages/ProfilePage';
-import SocialPostGenerator from './pages/SocialPostGenerator';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/header';
+import HomePage from './pages/HomePage'; // Assuming you have a Home component
+import SocialPostGenerator from './pages/SocialPostGenerator'; // Assuming you have a GeneratePost component
+import ProfilePage from './pages/ProfilePage'; // Assuming you have a Profile component
+import Login from './pages/Login'; // Import the new Login component
+import { AuthProvider, useAuth } from './context/AuthContext'; // Import AuthProvider and useAuth
+import './App.css'; // Your global app styles
 
-function App() {
-  return (
-    <Router>
-      <Header /> {/* Render the Header on all pages */}
-      
-      <main className="app-main-content"> {/* Use the app-main-content class defined in app.css */}
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/generate" element={<SocialPostGenerator />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          {/* Add other routes here if you have them */}
-        </Routes>
-      </main>
-    </Router>
-  );
-}
+// A component to protect routes
+const PrivateRoute = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+const AppContent = () => {
+    return (
+        <>
+            <Header />
+            <main>
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<Login />} /> {/* Login route */}
+                    <Route
+                        path="/generate"
+                        element={
+                            <PrivateRoute>
+                                <SocialPostGenerator />
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/profile"
+                        element={
+                            <PrivateRoute>
+                                <ProfilePage />
+                            </PrivateRoute>
+                        }
+                    />
+                    {/* Add other public routes as needed */}
+                </Routes>
+            </main>
+        </>
+    );
+};
+
+const App = () => {
+    return (
+        <Router>
+            <AuthProvider> {/* Wrap your entire app with AuthProvider */}
+                <AppContent />
+            </AuthProvider>
+        </Router>
+    );
+};
 
 export default App;

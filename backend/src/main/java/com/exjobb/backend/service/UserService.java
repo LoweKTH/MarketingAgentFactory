@@ -284,6 +284,21 @@ public class UserService implements UserDetailsService {
         return stats;
     }
 
+    public boolean authenticate(String username, String password) {
+        // 1. Fetch user from the database based on username
+        User user = userRepository.findByUsername(username).orElse(null);
+
+        // If user not found, authentication fails
+        if (user == null) {
+            return false;
+        }
+
+        // 2. Compare the provided raw password with the hashed password stored in the database
+        // using PasswordEncoder.matches()
+        return passwordEncoder.matches(password, user.getPassword());
+    }
+
+
     /**
      * Simple data class for user statistics.
      */
