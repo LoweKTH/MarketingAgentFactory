@@ -21,9 +21,9 @@ public class UserSocialConnection {
 
     // Link to your User entity (assuming you have one).
     // If you have a User entity, uncomment the following and ensure 'User' class exists.
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "user_id", nullable = false)
-    // private User user; // This links a social connection to a specific internal user
+     @ManyToOne(fetch = FetchType.LAZY)
+     @JoinColumn(name = "user_id", nullable = false)
+     private User user; // This links a social connection to a specific internal user
 
     @Column(nullable = false)
     private String platform; // e.g., "twitter", "linkedin", "facebook"

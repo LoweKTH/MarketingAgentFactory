@@ -2,6 +2,8 @@ package com.exjobb.backend.repository;
 
 import com.exjobb.backend.entity.Task;
 import com.exjobb.backend.entity.User;
+import com.exjobb.backend.entity.UserSocialConnection;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -159,4 +161,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     @Query("SELECT t FROM Task t WHERE t.createdBy = :user AND t.status = 'FAILED' ORDER BY t.updatedAt DESC")
     List<Task> findRetryableTasks(@Param("user") User user);
+    
+ // Find tasks that are due now or in the past, and are in 'CREATED' or 'PROCESSING' status.
+    // Also, ensure the recurrenceEndDate (if set) is not in the past.
+    @Query("SELECT t FROM Task t WHERE t.nextScheduledTime <= :currentTime AND (t.status = 'CREATED' OR t.status = 'PROCESSING') AND (t.recurrenceEndDate IS NULL OR t.recurrenceEndDate >= :currentTime)")
+    List<Task> findTasksDueForPosting(@Param("currentTime") LocalDateTime currentTime);
+
+
 }

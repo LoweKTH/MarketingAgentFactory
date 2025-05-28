@@ -1,6 +1,9 @@
 // src/services/api.js
 
-const API_BASE_URL = 'http://localhost:8080/api'; // *** IMPORTANT: Replace with your actual backend API URL ***
+// Import the custom axios instance
+import api from '../api/api';
+
+// const API_BASE_URL = 'http://localhost:8080/api'; // No longer needed
 
 /**
  * Fetches tasks for the current user from the backend API.
@@ -9,61 +12,27 @@ const API_BASE_URL = 'http://localhost:8080/api'; // *** IMPORTANT: Replace with
  */
 export const fetchTasks = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks/getTasks`); // Using API_BASE_URL
-        if (!response.ok) {
-            let errorMessage = `HTTP error! Status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (jsonError) {
-                console.error("Failed to parse error response as JSON:", jsonError);
-            }
-            throw new Error(errorMessage);
-        }
-        const data = await response.json();
-        return data;
+        // Use api.get()
+        const response = await api.get('/tasks/getTasks');
+
+        // Axios handles response.ok and JSON parsing automatically
+        return response.data;
     } catch (error) {
-        console.error("Error fetching tasks:", error);
+        console.error("Error fetching tasks:", error.response?.data || error.message);
         throw error;
     }
 };
 
 export const deleteTask = async (taskId) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, { // Assuming DELETE /api/tasks/{taskId}
-            method: 'DELETE',
-            headers: {
-                // Add any necessary headers, e.g., authorization token
-                // 'Authorization': `Bearer ${yourAuthToken}`
-            },
-        });
+        // Use api.delete()
+        const response = await api.delete(`/tasks/${taskId}`);
 
-        if (!response.ok) {
-            let errorMessage = `HTTP error! Status: ${response.status}`;
-            try {
-                // Attempt to parse a more specific error message from the backend if available
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (jsonError) {
-                console.error("Failed to parse error response as JSON during delete:", jsonError);
-            }
-            throw new Error(errorMessage);
-        }
-
-        // If the response is 204 No Content, response.json() would fail.
-        // Check if there's content before trying to parse JSON.
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            // If the backend sends a JSON response on success (e.g., confirmation message)
-            const result = await response.json();
-            return result;
-        } else {
-            // No content expected or successful deletion without a body
-            return;
-        }
-
+        // Axios handles successful responses, even 204 No Content.
+        // If your backend returns data on delete (uncommon but possible), it would be in response.data
+        return response.data; // Will be undefined for 204 No Content
     } catch (error) {
-        console.error(`Error deleting task with ID ${taskId}:`, error);
+        console.error(`Error deleting task with ID ${taskId}:`, error.response?.data || error.message);
         throw error; // Re-throw the error for the calling component to handle
     }
 };

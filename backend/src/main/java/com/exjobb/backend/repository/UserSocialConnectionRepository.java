@@ -1,7 +1,7 @@
-// src/main/java/com/exjobb/backend/repository/UserSocialConnectionRepository.java
 package com.exjobb.backend.repository;
 
 import com.exjobb.backend.entity.UserSocialConnection;
+import com.exjobb.backend.entity.User; // Make sure you import your User entity here
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,7 +17,14 @@ public interface UserSocialConnectionRepository extends JpaRepository<UserSocial
     // Find all connections for a given platform (useful for scheduled tasks)
     List<UserSocialConnection> findByPlatform(String platform);
 
-    // If you have a User entity, you might also add:
-    // Optional<UserSocialConnection> findByUserAndPlatform(User user, String platform);
-    // List<UserSocialConnection> findByUser(User user);
+    /**
+     * Find a social connection by the main application User's ID and the platform.
+     * This method assumes that the UserSocialConnection entity has a field named 'user'
+     * which is a reference to the User entity.
+     *
+     * @param userId The ID of the main application user.
+     * @param platform The social media platform (e.g., "twitter", "linkedin").
+     * @return An Optional containing the UserSocialConnection if found, otherwise empty.
+     */
+    Optional<UserSocialConnection> findByUserIdAndPlatform(Long userId, String platform);
 }

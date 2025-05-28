@@ -1,28 +1,21 @@
-// Updated ContentGenerator-api.js
-const API_BASE_URL = 'http://localhost:8080/api';
+// src/api/ContentGenerator-api.js
+
+// Import the custom axios instance
+import api from '../api/api';
+
+// const API_BASE_URL = 'http://localhost:8080/api'; // No longer needed
 
 /**
  * Generate social media content (no saving to database)
  */
 export async function generateSocialPost(data) {
     try {
-        const response = await fetch(`${API_BASE_URL}/content/generate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
+        // Use api.post() for POST requests
+        const response = await api.post('/content/generate', data); // Axios automatically strings JSON body
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `API request failed with status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result;
+        return response.data;
     } catch (error) {
-        console.error('Error generating social post:', error);
+        console.error('Error generating social post:', error.response?.data || error.message);
         throw error;
     }
 }
@@ -32,23 +25,12 @@ export async function generateSocialPost(data) {
  */
 export async function saveGeneratedContent(data) {
     try {
-        const response = await fetch(`${API_BASE_URL}/content/save`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
+        // Use api.post() for POST requests
+        const response = await api.post('/content/save', data);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Save request failed with status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result;
+        return response.data;
     } catch (error) {
-        console.error('Error saving content:', error);
+        console.error('Error saving content:', error.response?.data || error.message);
         throw error;
     }
 }

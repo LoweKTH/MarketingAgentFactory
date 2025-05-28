@@ -1,6 +1,6 @@
 // src/components/PublishModal.jsx
 import React, { useState } from 'react';
-import './PublishModal.css'; // Create this CSS file
+import './PublishModal.css';
 
 const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
     // State to keep track of selected platforms
@@ -13,11 +13,12 @@ const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
 
     const [isRecurring, setIsRecurring] = useState(false);
     const [frequencyHours, setFrequencyHours] = useState(24);
+    const [scheduledStartTime, setScheduledStartTime] = useState('');
 
     const handlePlatformChange = (platform) => {
         setSelectedPlatforms(prev => ({
             ...prev,
-            [platform]: !prev[platform] // Toggle selection
+            [platform]: !prev[platform]
         }));
     };
 
@@ -31,12 +32,32 @@ const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
             return;
         }
 
-        // Call the parent's onPublish function with selected platforms and content
-        onPublish(platformsToPublish, generatedPostContent);
-        onClose(); // Close the modal after confirming publish
+        // Enhanced data structure for recurring posts
+        const publishData = {
+            platforms: platformsToPublish,
+            content: generatedPostContent,
+            isRecurring: isRecurring,
+            frequencyHours: isRecurring ? frequencyHours : null,
+            scheduledStartTime: isRecurring && scheduledStartTime ? new Date(scheduledStartTime).toISOString() : null
+        };
+
+        // Call the parent's onPublish function with enhanced data
+        onPublish(publishData);
+        onClose();
     };
 
-   return (
+    // Get current datetime for min attribute (can't schedule in the past)
+    const getCurrentDateTime = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close-button" onClick={onClose}>&times;</button>
@@ -48,7 +69,6 @@ const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
                 </p>
 
                 <div className="platform-selection-grid">
-                    {/* ... (Existing platform checkboxes) ... */}
                     <label className="platform-checkbox">
                         <input type="checkbox" checked={selectedPlatforms.twitter} onChange={() => handlePlatformChange('twitter')} />
                         <i className="fab fa-twitter"></i> Twitter/X
@@ -67,7 +87,7 @@ const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
                     </label>
                 </div>
 
-                {/* NEW: Recurring Post Options */}
+                {/* Enhanced Recurring Post Options */}
                 <div className="recurring-options">
                     <label className="recurring-checkbox">
                         <input
@@ -79,17 +99,31 @@ const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
                     </label>
 
                     {isRecurring && (
-                        <div className="frequency-input">
-                            <label htmlFor="frequency">Repeat every:</label>
-                            <input
-                                type="number"
-                                id="frequency"
-                                value={frequencyHours}
-                                onChange={(e) => setFrequencyHours(Math.max(1, parseInt(e.target.value) || 1))} // Min 1 hour
-                                min="1"
-                                step="1"
-                            />
-                            <span>hours</span>
+                        <div className="recurring-settings">
+                            <div className="frequency-input">
+                                <label htmlFor="frequency">Repeat every:</label>
+                                <input
+                                    type="number"
+                                    id="frequency"
+                                    value={frequencyHours}
+                                    onChange={(e) => setFrequencyHours(Math.max(1, parseInt(e.target.value) || 1))}
+                                    min="1"
+                                    step="1"
+                                />
+                                <span>hours</span>
+                            </div>
+
+                            <div className="start-time-input">
+                                <label htmlFor="startTime">Start posting from (optional):</label>
+                                <input
+                                    type="datetime-local"
+                                    id="startTime"
+                                    value={scheduledStartTime}
+                                    onChange={(e) => setScheduledStartTime(e.target.value)}
+                                    min={getCurrentDateTime()}
+                                />
+                                <small>If not set, recurring posts will start immediately</small>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -97,7 +131,7 @@ const PublishModal = ({ onClose, onPublish, generatedPostContent }) => {
                 <div className="modal-actions">
                     <button className="modal-cancel-btn" onClick={onClose}>Cancel</button>
                     <button className="modal-confirm-btn" onClick={handlePublishConfirm}>
-                        Confirm Publish
+                        {isRecurring ? 'Schedule Recurring Posts' : 'Publish Now'}
                     </button>
                 </div>
             </div>

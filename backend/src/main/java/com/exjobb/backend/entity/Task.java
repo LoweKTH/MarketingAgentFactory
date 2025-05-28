@@ -124,6 +124,42 @@ public class Task {
     private LocalDateTime updatedAt;
 
     /**
+     * Flag to indicate if the post is recurring.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isRecurring = false; // Default to false for one-time posts
+
+    /**
+     * The initial scheduled time for a task. For recurring tasks, this is the first post time.
+     * For one-time tasks, this is the single post time.
+     */
+    private LocalDateTime initialScheduledTime;
+
+    /**
+     * The calculated next scheduled time for a recurring post.
+     * This will be updated after each successful recurrence.
+     */
+    private LocalDateTime nextScheduledTime;
+
+    /**
+     * For recurring posts, defines how often the post should recur (e.g., 1, 2, 5).
+     * Only relevant if isRecurring is true.
+     */
+    private Integer recurrenceInterval;
+
+    /**
+     * For recurring posts, defines the unit of the recurrenceInterval (e.g., "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS").
+     * Only relevant if isRecurring is true.
+     */
+    private String recurrenceUnit; // Could be an enum if you want to restrict units
+
+    /**
+     * For recurring posts, indicates the date and time after which posts should stop. (Optional)
+     */
+    private LocalDateTime recurrenceEndDate;
+
+    /**
      * Possible statuses for a task.
      */
     public enum TaskStatus {

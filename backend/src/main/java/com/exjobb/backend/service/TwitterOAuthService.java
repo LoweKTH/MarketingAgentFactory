@@ -1,8 +1,9 @@
-// src/main/java/com/exjobb/backend/service/TwitterOAuthService.java
 package com.exjobb.backend.service;
 
+import com.exjobb.backend.entity.User; // Import User entity
 import com.exjobb.backend.entity.UserSocialConnection;
 import com.exjobb.backend.repository.UserSocialConnectionRepository;
+import com.exjobb.backend.repository.UserRepository; // Import UserRepository
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
@@ -19,6 +20,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.security.core.Authentication; // Import Authentication
+import org.springframework.security.core.context.SecurityContextHolder; // Import SecurityContextHolder
+import org.springframework.security.core.userdetails.UserDetails; // Import UserDetails
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -49,13 +53,16 @@ public class TwitterOAuthService implements OAuthService {
 
     private final RestTemplate restTemplate;
     private final UserSocialConnectionRepository userSocialConnectionRepository;
+    private final UserRepository userRepository; // Inject UserRepository
 
     private final String codeChallenge = "challenge";
     private final String codeChallengeMethod = "plain";
 
-    public TwitterOAuthService(UserSocialConnectionRepository userSocialConnectionRepository) {
+    public TwitterOAuthService(UserSocialConnectionRepository userSocialConnectionRepository,
+                               UserRepository userRepository) { // Add UserRepository to constructor
         this.restTemplate = new RestTemplate();
         this.userSocialConnectionRepository = userSocialConnectionRepository;
+        this.userRepository = userRepository; // Initialize
     }
 
     @Override
@@ -158,7 +165,7 @@ public class TwitterOAuthService implements OAuthService {
                         responseEntity.getStatusCode(), responseEntity.getBody());
                 return frontendRedirectBaseUrl + "?error=token_exchange_failed&error_description=" +
                         URLEncoder.encode("Failed to exchange authorization code for access token. " +
-                                "Server responded with status: " + responseEntity.getStatusCode(),
+                                        "Server responded with status: " + responseEntity.getStatusCode(),
                                 StandardCharsets.UTF_8);
             }
 
@@ -173,8 +180,21 @@ public class TwitterOAuthService implements OAuthService {
                             URLEncoder.encode("Could not retrieve Twitter user ID", StandardCharsets.UTF_8);
                 }
 
-                // Assuming you have a way to identify your internal user (e.g., from session or security context)
-                Long currentUserId = 1L; // Replace with actual user ID retrieval from your auth system
+                // --- START OF MODIFIED SECTION ---
+                User currentUser = null;
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof UserDetails) {
+                    String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+                    currentUser = userRepository.findByUsername(username).orElse(null);
+                }
+
+                if (currentUser == null) {
+                    logger.error("Could not determine current authenticated user for Twitter connection. User must be logged in.");
+                    return frontendRedirectBaseUrl + "?error=user_not_authenticated&error_description=" +
+                            URLEncoder.encode("User not authenticated. Please log in and try again.", StandardCharsets.UTF_8);
+                }
+                // --- END OF MODIFIED SECTION ---
+
 
                 Optional<UserSocialConnection> existingConnection = userSocialConnectionRepository.findByPlatformAndPlatformUserId("twitter", twitterUserId);
 
@@ -189,6 +209,10 @@ public class TwitterOAuthService implements OAuthService {
                     connection.setCreatedAt(Instant.now());
                     logger.info("Creating new Twitter connection for user ID: {}", twitterUserId);
                 }
+
+                // --- CRITICAL LINE TO ADD/UPDATE ---
+                connection.setUser(currentUser); // Set the User object here!
+                // --- END CRITICAL LINE ---
 
                 connection.setAccessToken(tokenResponse.getAccessToken());
                 connection.setRefreshToken(tokenResponse.getRefreshToken());

@@ -1,27 +1,20 @@
 // src/api/Connection-api.js
 
-const API_BASE_URL = 'http://localhost:8080/api'; // Or your actual backend URL
+// Import the custom axios instance
+import api from '../api/api';
+
+// const API_BASE_URL = 'http://localhost:8080/api'; // No longer needed if base URL is set in api.js
 
 export const fetchConnectedPlatforms = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/connections`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                // Add authorization headers here if your backend requires it
-                // e.g., 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
-            },
-        });
+        // Use the 'api' (axios) instance instead of fetch
+        const response = await api.get('/auth/connections'); // Use api.get() for GET requests
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to fetch connected platforms');
-        }
-
-        const data = await response.json();
-        return data; // This will be a map like {twitter: true, linkedin: false, ...}
+        // Axios automatically handles response.ok and parses JSON,
+        // so much of the boilerplate can be removed.
+        return response.data; // Axios puts the response body directly in .data
     } catch (error) {
-        console.error("Error fetching connected platforms:", error);
-        throw error;
+        console.error("Error fetching connected platforms:", error.response?.data || error.message);
+        throw error; // Re-throw the error for the calling component to handle
     }
 };
