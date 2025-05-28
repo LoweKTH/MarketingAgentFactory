@@ -1,8 +1,12 @@
+// src/pages/ProfilePage.js
+
 import React, { useState, useEffect } from 'react';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { fetchTasks as fetchTasksApi } from '../api/Task-api'; // Correct import with alias
+import { fetchTasks as fetchTasksApi } from '../api/Task-api';
 import { deleteTask } from '../api/Task-api';
-import './ProfilePage.css'; // Ensure your CSS is correctly linked
+import './ProfilePage.css';
+import { initiateOAuth } from '../api/Auth-api';
+import { fetchConnectedPlatforms } from '../api/Connection-api'; // Import the new API helper
 
 // Helper function to capitalize the first letter of each word
 const capitalizeWords = (s) => {
@@ -11,56 +15,48 @@ const capitalizeWords = (s) => {
 };
 
 const ProfilePage = () => {
-    // Define the social media platforms and their connection status
+    // Initialize with default states, but fetch actual status
     const [connectedAccounts, setConnectedAccounts] = useState({
-        twitter: true,
-        linkedin: true,
+        twitter: false,
+        linkedin: false, // Set to false initially, will be updated by API
         facebook: false,
         instagram: false,
     });
-
-    // State for the active tab (e.g., 'all', 'twitter', 'linkedin')
     const [activeTab, setActiveTab] = useState('all');
-
-    // This will store tasks fetched from the backend, with added placeholder fields
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [postToDeleteId, setPostToDeleteId] = useState(null);
+    const [showConnectOptions, setShowConnectOptions] = useState(false);
+    const [connectionMessage, setConnectionMessage] = useState(null);
+    const [connectionError, setConnectionError] = useState(null);
 
     // Function to fetch tasks from the backend and process them for display
     const fetchAndProcessTasks = async () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await fetchTasksApi(); // Call the actual API function from api.js
-
-            // Map the backend TaskDto objects and add placeholder values for recurrence fields
+            const data = await fetchTasksApi();
             const formattedTasks = data.map(task => {
-                // Generate some random-looking placeholder values for recurring fields
-                const randomHours = Math.floor(Math.random() * (72 - 24 + 1)) + 24; // Between 24 and 72 hours
+                const randomHours = Math.floor(Math.random() * (72 - 24 + 1)) + 24;
                 const baseDate = task.createdAt ? new Date(task.createdAt) : new Date();
 
-                // Example placeholder dates (adjust format as needed)
                 const lastRunPlaceholder = new Date(baseDate.getTime() - (randomHours * 3600 * 1000)).toLocaleString();
                 const nextRunPlaceholder = new Date(baseDate.getTime() + (randomHours * 3600 * 1000)).toLocaleString();
 
                 return {
-                    ...task, // Spread all original TaskDto fields (id, taskId, contentType, generatedContent, etc.)
-                    id: task.taskId || task.id, // Use taskId as primary ID, fallback to DB id
-                    platform: task.platform ? task.platform.toLowerCase() : 'N/A', // Ensure platform is lowercase
+                    ...task,
+                    id: task.taskId || task.id,
+                    platform: task.platform ? task.platform.toLowerCase() : 'N/A',
                     isActive: task.status === 'COMPLETED' || task.status === 'PROCESSING' || task.status === 'PENDING',
                     topic: task.contentType ? capitalizeWords(task.contentType.replace(/_/g, ' ')) : 'Generated Content',
-                    // --- NEW: Hardcoded/Random placeholder values for recurring post fields ---
                     frequencyHours: randomHours,
                     lastRun: lastRunPlaceholder,
                     nextRun: nextRunPlaceholder,
-                    // --- END NEW ---
                 };
             });
-            setTasks(formattedTasks); // Update the 'tasks' state
+            setTasks(formattedTasks);
         } catch (err) {
             console.error("Failed to load tasks:", err);
             setError("Failed to load tasks. Please try again.");
@@ -69,9 +65,20 @@ const ProfilePage = () => {
         }
     };
 
-    // Fetch tasks when the component mounts
+    // New useEffect to fetch connection status
     useEffect(() => {
-        fetchAndProcessTasks();
+        const getConnections = async () => {
+            try {
+                const connections = await fetchConnectedPlatforms();
+                setConnectedAccounts(connections); // Update state with actual connection status
+            } catch (err) {
+                console.error("Failed to fetch connected platforms:", err);
+                // Optionally set a connection error state here
+            }
+        };
+
+        fetchAndProcessTasks(); // Keep existing task fetch
+        getConnections(); // Fetch connection status on component mount
     }, []);
 
     const handleToggleActive = (taskId) => {
@@ -83,28 +90,23 @@ const ProfilePage = () => {
         console.log(`Toggle active status for task: ${taskId}`);
         // TODO: In a real app, implement an API call to update the task's status in the backend
     };
-
     const handleDeleteClick = (taskId) => {
         setPostToDeleteId(taskId);
         setShowDeleteConfirm(true);
     };
-
-    const handleConfirmDelete = async () => { // Make this function async
+    const handleConfirmDelete = async () => {
         try {
-            // Call the backend API to delete the task
-            await deleteTask(postToDeleteId); // Use the new deleteTask API function
-
-            // If the API call is successful, then update the frontend state
+            await deleteTask(postToDeleteId);
             setTasks(prevTasks =>
                 prevTasks.filter(task => task.id !== postToDeleteId)
             );
             console.log(`Successfully deleted task: ${postToDeleteId} from backend and frontend.`);
         } catch (err) {
             console.error(`Failed to delete task ${postToDeleteId}:`, err);
-            setError(`Failed to delete task: ${err.message}`); // Display an error to the user
+            setError(`Failed to delete task: ${err.message}`);
         } finally {
-            setShowDeleteConfirm(false); // Close modal regardless of success/failure
-            setPostToDeleteId(null); // Clear the ID
+            setShowDeleteConfirm(false);
+            setPostToDeleteId(null);
         }
     };
 
@@ -113,9 +115,48 @@ const ProfilePage = () => {
         setPostToDeleteId(null);
     };
 
-    const handleConnectNewAccount = () => {
-        console.log("Connect New Account clicked");
+    const handleConnectPlatform = async (platform) => {
+        setShowConnectOptions(false); // Close the options dropdown immediately
+
+        try {
+            setConnectionMessage(`Initiating ${capitalizeWords(platform)} connection...`);
+            setConnectionError(null); // Clear previous errors
+
+            await initiateOAuth(platform);
+            // The API function will handle the window.location.href redirection,
+            // so no need for further local state updates here unless the redirection fails
+        } catch (err) {
+            console.error(`Error connecting to ${capitalizeWords(platform)}:`, err);
+            setConnectionError(`Error connecting to ${capitalizeWords(platform)}: ${err.message}`);
+            setConnectionMessage(null);
+        }
     };
+
+    // Monitor URL for OAuth callback parameters after redirect
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const success = params.get('success');
+        const platform = params.get('platform');
+        const errorParam = params.get('error');
+        const errorDescription = params.get('error_description');
+
+        if (success === 'true' && platform) {
+            setConnectionMessage(`${capitalizeWords(platform)} connected successfully!`);
+            // Re-fetch connections to update the UI
+            fetchConnectedPlatforms().then(connections => {
+                setConnectedAccounts(connections);
+            }).catch(err => {
+                console.error("Failed to re-fetch connections after successful OAuth:", err);
+            });
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (errorParam) {
+            setConnectionError(`Connection failed: ${errorDescription || errorParam}`);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, []);
+
 
     const filteredTasks = tasks.filter(task => {
         if (activeTab === 'all') {
@@ -148,6 +189,8 @@ const ProfilePage = () => {
 
             <div className="connected-accounts-section">
                 <h2>Connected Social Accounts</h2>
+                {connectionMessage && <p className="success-message">{connectionMessage}</p>}
+                {connectionError && <p className="error-message">{connectionError}</p>}
                 <div className="account-status">
                     {Object.entries(connectedAccounts).map(([platform, isConnected]) => (
                         <span key={platform} className={`platform-icon ${isConnected ? 'connected' : 'not-connected'}`}>
@@ -155,9 +198,30 @@ const ProfilePage = () => {
                         </span>
                     ))}
                 </div>
-                <button className="connect-new-btn" onClick={handleConnectNewAccount}>
+                <button className="connect-new-btn" onClick={() => setShowConnectOptions(true)}>
                     Connect New Account
                 </button>
+
+                {/* NEW: Connect New Account Options */}
+                {showConnectOptions && (
+                    <div className="connect-options-dropdown">
+                        <h3>Select a platform to connect:</h3>
+                        {Object.entries(connectedAccounts).map(([platform, isConnected]) => (
+                            !isConnected && (
+                                <button
+                                    key={`connect-${platform}`}
+                                    className="connect-option-btn"
+                                    onClick={() => handleConnectPlatform(platform)}
+                                >
+                                    {getPlatformIcon(platform)} Connect {capitalizeWords(platform)}
+                                </button>
+                            )
+                        ))}
+                         <button className="cancel-connect-btn" onClick={() => setShowConnectOptions(false)}>
+                            Cancel
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="tabs-container">
@@ -228,11 +292,9 @@ const ProfilePage = () => {
                             </div>
                             <div className="post-details">
                                 <span><i className="fas fa-share-alt"></i> Platform: {task.platform ? capitalizeWords(task.platform) : 'N/A'}</span>
-                                {/* RE-ADDED: Hardcoded/placeholder recurrence fields */}
                                 <span><i className="fas fa-redo-alt"></i> Every {task.frequencyHours} hours</span>
                                 <span><i className="fas fa-clock"></i> Last Run: {task.lastRun}</span>
                                 {task.isActive && <span><i className="fas fa-calendar-alt"></i> Next Run: {task.nextRun}</span>}
-                                {/* END RE-ADDED */}
                                 {!task.isActive && <span style={{ color: '#dc3545' }}><i className="fas fa-pause-circle"></i> Paused</span>}
                                 {task.status && <span><i className="fas fa-info-circle"></i> Status: {capitalizeWords(task.status)}</span>}
                                 {task.createdAt && <span><i className="fas fa-calendar-alt"></i> Created At: {new Date(task.createdAt).toLocaleString()}</span>}

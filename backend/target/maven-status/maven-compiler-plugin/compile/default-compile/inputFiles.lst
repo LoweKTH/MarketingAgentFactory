@@ -1,10 +1,12 @@
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\BackendApplication.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\config\CorsConfig.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\config\DatabaseConfig.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\config\DataInitializer.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\config\SecurityConfig.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\config\WebConfig.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\ContentController.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\HealthController.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\OAuthController.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\controller\TaskController.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\ApiResponse.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\dto\ContentGenerationRequest.java
@@ -19,7 +21,10 @@ C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjo
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\repository\BrandGuidelineRepository.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\repository\TaskRepository.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\repository\UserRepository.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\FacebookOAuthService.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\OAuthService.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\PythonServiceClient.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\TaskRouterService.java
+C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\TwitterOAuthService.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\service\UserService.java
 C:\Users\benny\IdeaProjects\MarketingAgentFactory\backend\src\main\java\com\exjobb\backend\utils\TaskMapper.java
