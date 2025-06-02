@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.exjobb.backend.service.OAuthService;
+import com.exjobb.backend.service.SocialConnectionService;
 import com.exjobb.backend.service.TwitterOAuthService;
 import com.exjobb.backend.entity.UserSocialConnection;
 import com.exjobb.backend.repository.UserSocialConnectionRepository; // Import repository
@@ -33,7 +34,7 @@ public class OAuthController {
 
     private final Map<String, OAuthService> oauthServices;
     private final TwitterOAuthService twitterOAuthService;
-    private final UserSocialConnectionRepository userSocialConnectionRepository; // Inject repository
+    private final SocialConnectionService socialConnectionService;
 
     private static final Logger logger = LoggerFactory.getLogger(OAuthController.class);
     @Value("${frontend.url:http://localhost:5173}")
@@ -41,10 +42,11 @@ public class OAuthController {
 
     // Modified constructor to include UserSocialConnectionRepository
     public OAuthController(Map<String, OAuthService> oauthServices, TwitterOAuthService twitterOAuthService,
-                           UserSocialConnectionRepository userSocialConnectionRepository) {
+                           UserSocialConnectionRepository userSocialConnectionRepository,
+                           SocialConnectionService socialConnectionService) {
         this.oauthServices = oauthServices;
         this.twitterOAuthService = twitterOAuthService;
-        this.userSocialConnectionRepository = userSocialConnectionRepository; // Initialize
+        this.socialConnectionService = socialConnectionService;
     }
 
     @GetMapping("/{platform}/initiate")
@@ -87,33 +89,16 @@ public class OAuthController {
             .build();
     }
 
-    /**
-     * New Endpoint: Get connected platforms for the current user.
-     * In a real application, you'd get the user ID from the authenticated context (e.g., Spring Security).
-     * For this example, we'll assume a dummy user ID or just return all connections.
-     */
     @GetMapping("/connections")
     public ResponseEntity<Map<String, Boolean>> getConnections() {
-        // Replace with actual user ID retrieval from your authentication system
-        // For demonstration, let's assume we want to check all connected platforms for now,
-        // or filter by a specific user ID if you have one.
-        // Long currentUserId = ... // Get from session, Spring Security, etc.
+        // In a real application, you'd get the actual user ID from the security context
+        // For now, let's use a placeholder.
+        Long currentUserId = 1L; // Placeholder: Replace with actual user ID retrieval from your auth system
 
-        Map<String, Boolean> connectedPlatforms = new HashMap<>();
-        connectedPlatforms.put("twitter", false);
-        connectedPlatforms.put("linkedin", false);
-        connectedPlatforms.put("facebook", false);
-        connectedPlatforms.put("instagram", false);
+        // Delegate to the SocialConnectionService to get and validate connections
+        Map<String, Boolean> connectedStatus = socialConnectionService.getAndValidateConnectedPlatforms(currentUserId);
 
-        // Find all connections (for simplicity, assuming one user for now, or you'd filter by user ID)
-        List<UserSocialConnection> connections = userSocialConnectionRepository.findAll();
-        // If you had a user, you'd do: userSocialConnectionRepository.findByUser(user);
-
-        for (UserSocialConnection connection : connections) {
-            connectedPlatforms.put(connection.getPlatform().toLowerCase(), true);
-        }
-
-        return ResponseEntity.ok(connectedPlatforms);
+        return ResponseEntity.ok(connectedStatus);
     }
 
 
