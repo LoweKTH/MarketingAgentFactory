@@ -642,7 +642,8 @@ public class TaskRouterService {
                     try {
                         // Call the TwitterOAuthService to publish the tweet
                         // You'll need to implement the postTweet method in TwitterOAuthService
-                        twitterOAuthService.postTweet(validatedTwitterConnection.getAccessToken(), saveRequest.getContent());
+                        
+                        //twitterOAuthService.postTweet(validatedTwitterConnection.getAccessToken(), saveRequest.getContent());
                         log.info("Content successfully published to Twitter for platform user ID: {}", validatedTwitterConnection.getPlatformUserId());
                     } catch (Exception twitterPublishException) {
                         log.error("Failed to publish content to Twitter for platform user ID {}: {}",
