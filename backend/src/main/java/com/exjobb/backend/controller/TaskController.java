@@ -1,5 +1,7 @@
 package com.exjobb.backend.controller;
 
+import com.exjobb.backend.dto.ApiResponse;
+import com.exjobb.backend.dto.SaveContentRequest;
 import com.exjobb.backend.dto.TaskDto;
 import com.exjobb.backend.entity.Task;
 import com.exjobb.backend.entity.User;
@@ -7,6 +9,8 @@ import com.exjobb.backend.repository.TaskRepository;
 import com.exjobb.backend.service.TaskRouterService;
 import com.exjobb.backend.service.UserService;
 import com.exjobb.backend.utils.TaskMapper;
+
+import lombok.extern.slf4j.Slf4j;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/tasks") // Base path for task-related endpoints
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin(origins = "http://localhost:5173") 
 public class TaskController {
 
@@ -66,6 +71,37 @@ public class TaskController {
             // Handle exceptions, e.g., task not found
             return ResponseEntity.notFound().build(); // 404 Not Found if task doesn't exist
             // Or return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+    }
+
+    /**
+     * Save the generated content to database
+     * Called when user clicks "Save" button
+     */
+    @PostMapping("/save")
+    public ResponseEntity<ApiResponse<String>> saveContent(
+            @RequestBody SaveContentRequest saveRequest) {
+
+        log.info("Saving content to database");
+
+        try {
+            User dummyUser = User.builder()
+                    .id(1L)
+                    .username("testuser")
+                    .email("test@example.com")
+                    .build();
+
+            String taskId = taskRouterService.saveGeneratedContent(saveRequest, dummyUser);
+
+            return ResponseEntity.ok(
+                    ApiResponse.success(taskId, "Content saved successfully")
+            );
+
+        } catch (Exception e) {
+            log.error("Content save failed", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error("Content save failed", e.getMessage()));
         }
     }
 

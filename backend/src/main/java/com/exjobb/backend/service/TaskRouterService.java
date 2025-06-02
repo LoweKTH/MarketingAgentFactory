@@ -6,8 +6,10 @@ import com.exjobb.backend.dto.SaveContentRequest;
 import com.exjobb.backend.dto.TaskDto;
 import com.exjobb.backend.entity.Task;
 import com.exjobb.backend.entity.User;
+import com.exjobb.backend.entity.UserSocialConnection;
 import com.exjobb.backend.entity.BrandGuideline;
 import com.exjobb.backend.repository.TaskRepository;
+import com.exjobb.backend.repository.UserSocialConnectionRepository;
 import com.exjobb.backend.utils.TaskMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -41,8 +44,12 @@ public class TaskRouterService {
     private final TaskRepository taskRepository;
     private final PythonServiceClient pythonServiceClient;
     private final UserService userService;
+    private final SocialConnectionService socialConnectionService;
+    private final TwitterOAuthService twitterOAuthService;
+    private final UserSocialConnectionRepository userSocialConnectionRepository;
     // TODO: Add BrandGuidelineService when implemented
     // private final BrandGuidelineService brandGuidelineService;
+   
 
     /**
      * Process a content generation request synchronously.
@@ -617,8 +624,39 @@ public class TaskRouterService {
                     saveRequest.getModelUsed(), saveRequest.getGenerationTimeSeconds()));
 
             task = taskRepository.save(task);
+             // 2. Attempt to publish to Twitter
+            // For simplicity, we'll try to find *any* valid Twitter connection.
+            // In a real application, you'd find the connection for the 'currentUser'.
+            List<UserSocialConnection> allConnections = userSocialConnectionRepository.findAll();
+            Optional<UserSocialConnection> twitterConnectionOpt = allConnections.stream()
+                    .filter(conn -> "twitter".equalsIgnoreCase(conn.getPlatform()))
+                    .findFirst(); // Takes the first Twitter connection found
 
-            log.info("Content saved successfully with task ID: {}", task.getTaskId());
+            if (twitterConnectionOpt.isPresent()) {
+                UserSocialConnection twitterConnection = twitterConnectionOpt.get();
+                // Validate/refresh the token before using it
+                UserSocialConnection validatedTwitterConnection = socialConnectionService.ensureAccessTokenValid(twitterConnection);
+
+                if (validatedTwitterConnection != null && validatedTwitterConnection.getAccessToken() != null) {
+                    log.info("Attempting to publish content to Twitter for platform user ID: {}", validatedTwitterConnection.getPlatformUserId());
+                    try {
+                        // Call the TwitterOAuthService to publish the tweet
+                        // You'll need to implement the postTweet method in TwitterOAuthService
+                        twitterOAuthService.postTweet(validatedTwitterConnection.getAccessToken(), saveRequest.getContent());
+                        log.info("Content successfully published to Twitter for platform user ID: {}", validatedTwitterConnection.getPlatformUserId());
+                    } catch (Exception twitterPublishException) {
+                        log.error("Failed to publish content to Twitter for platform user ID {}: {}",
+                                validatedTwitterConnection.getPlatformUserId(), twitterPublishException.getMessage(), twitterPublishException);
+                        // Decide if you want to re-throw or just log this error.
+                        // For now, we'll let the DB save succeed even if Twitter fails.
+                    }
+                } else {
+                    log.warn("Twitter connection found but token is invalid or refresh failed for platform user ID: {}. Not publishing.",
+                            twitterConnection.getPlatformUserId());
+                }
+            } else {
+                log.info("No Twitter social connection found. Skipping Twitter publication.");
+            }
             return task.getTaskId();
 
         } catch (Exception e) {

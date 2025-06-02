@@ -18,7 +18,7 @@ public class SocialConnectionService {
  
     private static final Logger logger = LoggerFactory.getLogger(SocialConnectionService.class);
 
-    private final UserSocialConnectionRepository userSocialConnectionRepository;
+    final UserSocialConnectionRepository userSocialConnectionRepository;
     private final TwitterOAuthService twitterOAuthService; // Inject the Twitter specific service
 
     // You can add other OAuth services here as needed, e.g., LinkedInOAuthService, FacebookOAuthService
@@ -127,13 +127,13 @@ public class SocialConnectionService {
     }
 
     /**
-     * Private helper method to ensure a given UserSocialConnection's access token is valid.
+     * method to ensure a given UserSocialConnection's access token is valid.
      * It checks expiration and attempts to refresh if needed.
      *
      * @param connection The UserSocialConnection to validate.
      * @return The updated/refreshed UserSocialConnection, or null if validation/refresh failed.
      */
-    private UserSocialConnection ensureAccessTokenValid(UserSocialConnection connection) {
+    public UserSocialConnection ensureAccessTokenValid(UserSocialConnection connection) {
         if (!"twitter".equalsIgnoreCase(connection.getPlatform())) {
             logger.warn("ensureAccessTokenValid called with non-Twitter platform: {}", connection.getPlatform());
             return null; // This method is specifically for Twitter via twitterOAuthService

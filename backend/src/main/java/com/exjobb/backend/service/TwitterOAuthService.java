@@ -24,6 +24,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,8 +48,12 @@ public class TwitterOAuthService implements OAuthService {
     @Value("${twitter.api.users-me-url}")
     private String usersMeUrl;
 
+    @Value("${twitter.api.tweets-url}")
+    private String tweetsUrl;
+
     private final RestTemplate restTemplate;
     private final UserSocialConnectionRepository userSocialConnectionRepository;
+    private final ObjectMapper objectMapper;
 
     private final String codeChallenge = "challenge";
     private final String codeChallengeMethod = "plain";
@@ -56,6 +61,7 @@ public class TwitterOAuthService implements OAuthService {
     public TwitterOAuthService(UserSocialConnectionRepository userSocialConnectionRepository) {
         this.restTemplate = new RestTemplate();
         this.userSocialConnectionRepository = userSocialConnectionRepository;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -300,7 +306,60 @@ public class TwitterOAuthService implements OAuthService {
             logger.error("Error during access token refresh: {}", e.getMessage(), e);
             return null;
         }
+        
     }
+
+    public String postTweet(String accessToken, String tweetContent) {
+        logger.info("Attempting to publish tweet to Twitter.");
+        try {
+            HttpHeaders headers = new HttpHeaders();
+
+            
+            System.out.println(accessToken);
+            headers.setBearerAuth(accessToken);
+            headers.setContentType(MediaType.APPLICATION_JSON); // Twitter expects JSON for posting tweets
+
+            // Twitter API v2 endpoint for posting tweets
+            // https://developer.twitter.com/en/docs/twitter-api/tweets/manage-tweets/api-reference/post-tweets
+            // The JSON body should be {"text": "Your tweet content"}
+            Map<String, String> requestBody = Collections.singletonMap("text", tweetContent);
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+
+            HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
+
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    tweetsUrl, // Use the new @Value field for the tweets API URL
+                    HttpMethod.POST,
+                    requestEntity,
+                    String.class
+            );
+
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                // Parse the response to extract the tweet ID if needed
+                Map<String, Object> responseMap = objectMapper.readValue(responseEntity.getBody(), Map.class);
+                if (responseMap.containsKey("data") && ((Map<String, String>) responseMap.get("data")).containsKey("id")) {
+                    String tweetId = ((Map<String, String>) responseMap.get("data")).get("id");
+                    logger.info("Tweet published successfully. Tweet ID: {}", tweetId);
+                    return tweetId;
+                } else {
+                    logger.warn("Tweet published successfully but could not retrieve tweet ID from response: {}", responseEntity.getBody());
+                    return "UNKNOWN_ID"; // Return a placeholder or handle as appropriate
+                }
+            } else {
+                logger.error("Failed to publish tweet. Status: {}, Body: {}",
+                        responseEntity.getStatusCode(), responseEntity.getBody());
+                throw new RuntimeException("Failed to publish tweet: " + responseEntity.getBody());
+            }
+        } catch (HttpClientErrorException e) {
+            logger.error("HTTP error publishing tweet: Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new RuntimeException("HTTP error publishing tweet: " + e.getResponseBodyAsString(), e);
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred while publishing tweet: {}", e.getMessage(), e);
+            throw new RuntimeException("An unexpected error occurred during tweet publication.", e);
+        }
+    }
+
+    
 
     public static class AccessTokenResponse {
         @JsonProperty("token_type")
