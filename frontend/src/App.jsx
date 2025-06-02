@@ -1,17 +1,35 @@
-// src/App.js
+// src/App.js - Updated PrivateRoute component
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/header';
-import HomePage from './pages/HomePage'; // Assuming you have a Home component
-import SocialPostGenerator from './pages/SocialPostGenerator'; // Assuming you have a GeneratePost component
-import ProfilePage from './pages/ProfilePage'; // Assuming you have a Profile component
-import Login from './pages/Login'; // Import the new Login component
-import { AuthProvider, useAuth } from './context/AuthContext'; // Import AuthProvider and useAuth
-import './App.css'; // Your global app styles
+import HomePage from './pages/HomePage';
+import SocialPostGenerator from './pages/SocialPostGenerator';
+import ProfilePage from './pages/ProfilePage';
+import Login from './pages/Login';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import './App.css';
 
-// A component to protect routes
+// Updated PrivateRoute component with loading state
 const PrivateRoute = ({ children }) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
+    
+    // Show loading spinner while checking authentication
+    if (isLoading) {
+        return (
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100vh',
+                fontSize: '18px',
+                color: '#666'
+            }}>
+                <i className="fas fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
+                Loading...
+            </div>
+        );
+    }
+    
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
@@ -22,7 +40,7 @@ const AppContent = () => {
             <main>
                 <Routes>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/login" element={<Login />} /> {/* Login route */}
+                    <Route path="/login" element={<Login />} />
                     <Route
                         path="/generate"
                         element={
@@ -39,7 +57,6 @@ const AppContent = () => {
                             </PrivateRoute>
                         }
                     />
-                    {/* Add other public routes as needed */}
                 </Routes>
             </main>
         </>
@@ -49,7 +66,7 @@ const AppContent = () => {
 const App = () => {
     return (
         <Router>
-            <AuthProvider> {/* Wrap your entire app with AuthProvider */}
+            <AuthProvider>
                 <AppContent />
             </AuthProvider>
         </Router>

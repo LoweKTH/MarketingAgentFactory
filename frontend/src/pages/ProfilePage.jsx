@@ -67,6 +67,9 @@ const ProfilePage = () => {
 
     // New useEffect to fetch connection status
     useEffect(() => {
+        const token = localStorage.getItem('jwt_token');
+        console.log(token);
+
         const getConnections = async () => {
             try {
                 const connections = await fetchConnectedPlatforms();
@@ -79,6 +82,7 @@ const ProfilePage = () => {
 
         fetchAndProcessTasks(); // Keep existing task fetch
         getConnections(); // Fetch connection status on component mount
+        
     }, []);
 
     const handleToggleActive = (taskId) => {

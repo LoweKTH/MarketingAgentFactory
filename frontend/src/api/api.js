@@ -4,6 +4,7 @@ import axios from 'axios';
 // Create a custom axios instance
 const api = axios.create({
     baseURL: 'http://localhost:8080/api', // Your backend API base URL
+     withCredentials: true,
 });
 
 // Function to set up or clear the request interceptor
